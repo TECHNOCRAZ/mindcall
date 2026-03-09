@@ -1,1069 +1,280 @@
 import { useState, useEffect, useReducer, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ─────────────────────────────────────────────
-// WORD LISTS
-// ─────────────────────────────────────────────
-const WORDS = {
-  allEnglish: [
-    "able","acid","aged","also","area","army","atom","away","baby","back","ball","band",
-    "bank","base","bath","bear","beat","beef","bell","belt","bend","best","bind","bird",
-    "bite","black","blow","blue","bold","bolt","bond","bone","book","bore","boss","both",
-    "bowl","break","bright","bring","brown","buck","bull","burn","busy","cake","calm","camp",
-    "cape","card","care","carry","cart","cave","cell","change","check","chip","chop","city",
-    "clap","clay","clip","club","coal","code","coin","cold","come","cool","copy","core",
-    "cork","corn","cost","cozy","crab","crew","crop","cure","dark","dash","dawn","deal",
-    "dean","debt","deck","deed","deep","deer","deny","desk","dial","dice","diet","dine",
-    "dirt","disk","dive","dock","dome","door","dose","dove","down","drag","draw","drive",
-    "drop","drum","duke","dull","dusk","dust","duty","each","earl","earn","easy","echo",
-    "edge","edit","emit","envy","epic","even","exam","exit","face","fact","fade","fail",
-    "fake","fame","fare","fast","fate","fear","feed","feel","fell","felt","fern","file",
-    "fill","film","find","fine","fire","firm","fish","fist","flaw","flea","flex","flow",
-    "foam","fold","folk","fond","font","food","foot","ford","fork","form","foul","free",
-    "frog","fuel","full","fund","fuse","gain","gale","game","gang","gasp","gave","gaze",
-    "gear","gene","gift","gill","glad","glow","glue","goal","gold","gone","good","gore",
-    "gown","grab","gray","great","green","grid","grin","grit","grow","gulf","gull","gulp",
-    "hail","hair","half","halt","hand","hard","harp","hash","hate","hawk","head","heal",
-    "heap","heat","heel","heir","helm","herb","herd","high","hike","hill","hint","hire",
-    "hive","hold","hole","home","hoop","hope","horn","host","huge","hulk","hull","hunt",
-    "hurt","hymn","idea","idle","inch","iron","jade","jest","join","joke","jolt","jump",
-    "keen","keep","kill","kind","king","kiss","knee","knit","know","lack","lady","lake",
-    "lamb","lame","lamp","land","lane","lark","lash","last","late","lawn","lead","lean",
-    "leap","learn","left","less","life","lift","light","lime","line","link","lint","lion",
-    "list","live","load","lock","loft","lone","long","lore","lost","loud","love","luck",
-    "lure","lurk","lust","mace","main","make","mall","malt","mane","many","mark","mass",
-    "mast","math","maze","mean","meat","meet","melt","mesh","mild","milk","mind","mine",
-    "miss","mist","moat","mode","mole","monk","moon","more","moss","moth","move","much",
-    "mule","must","myth","nail","name","navy","neck","need","nest","news","nick","night",
-    "none","nook","norm","nose","note","noun","obey","odds","omen","once","only","open",
-    "oval","pace","pack","page","pair","pale","pane","park","part","past","path","peak",
-    "peel","pest","pick","pier","pile","pint","pipe","pity","place","plan","play","plow",
-    "plum","poem","poke","pole","poll","pond","pore","port","post","pour","power","prey",
-    "prop","pull","pump","punk","punt","pure","push","rack","raid","rain","rake","ramp",
-    "rank","rare","rash","rate","rave","reach","real","reef","reel","rent","rest","rich",
-    "ring","rind","riot","ripe","rise","risk","rite","road","roam","robe","rock","role",
-    "roll","roof","room","root","rope","rose","rule","rush","rust","safe","sage","sail",
-    "sake","salt","sand","sane","save","seal","seam","seat","seed","seep","self","sell",
-    "send","shed","ship","show","sigh","silk","sill","sink","size","skin","slow","small",
-    "smell","smile","snow","soil","sole","some","song","soot","soul","sour","span","spin",
-    "spot","spur","stab","star","stay","stem","step","stir","stop","store","stub","stun",
-    "suck","suit","sulk","surf","swap","sway","swim","tale","talk","tall","tame","tape",
-    "tart","taut","teak","teal","tear","tell","test","tide","tile","tilt","time","tire",
-    "toad","toil","toll","tomb","tone","tool","toss","town","trap","tree","trim","trip",
-    "trot","true","tuft","turf","turn","type","unit","upon","urge","vain","vale","vane",
-    "vase","vast","veil","vein","verb","vest","vial","vice","view","vine","void","volt",
-    "wade","wail","wake","walk","wand","wane","want","warm","warp","wash","wasp","wave",
-    "wear","weed","well","wide","wild","will","wind","wing","wish","wolf","wood","word",
-    "work","wren","yard","yawn","yell","yoke","zeal","zero","zest","zinc","zone",
-    "about","above","abuse","actor","adapt","admit","adopt","adult","after","again","agent",
-    "agree","ahead","alarm","album","alert","alien","align","alike","alive","alley","allow",
-    "alter","amber","amend","angel","anger","angle","ankle","annex","apart","apple","apply",
-    "arena","argue","arise","armor","aroma","arose","array","arrow","asset","atlas","attic",
-    "audio","audit","avoid","awake","award","aware","awful","badly","baker","basic","basis",
-    "beach","beast","began","begin","bench","blade","blame","bland","blank","blast","blaze",
-    "bleed","blend","bless","blind","block","blood","bloom","blown","blunt","board","boast",
-    "booth","boost","brace","braid","brain","brave","bread","bride","brief","brisk","broad",
-    "brook","broth","brush","buddy","build","built","bulge","bunch","burst","buyer","cabin",
-    "canal","candy","cease","chain","chalk","chase","cheap","cheat","cheek","cheer","chess",
-    "chest","chick","chief","child","choir","choke","chunk","churn","civil","claim","clamp",
-    "clash","clasp","class","claws","clean","clear","click","cliff","cling","cloak","clone",
-    "close","cloth","cloud","clout","clove","couch","could","count","court","cover","crack",
-    "crane","crash","crawl","crazy","creek","crisp","cross","cruel","crush","crust","cycle",
-    "dairy","dance","decay","delta","dense","depth","dodge","doubt","dough","draft","drain",
-    "drape","dread","dream","dress","dried","drift","drill","drink","droop","drove","drown",
-    "dwarf","dwell","eager","eagle","early","earth","eight","elbow","elder","elite","ember",
-    "empty","enemy","enjoy","enter","equal","error","essay","event","every","exact","exert",
-    "faith","false","fancy","feast","fever","fewer","fiber","field","fiery","fifth","fifty",
-    "fight","final","first","fixed","fizzy","flame","flare","flash","flask","flesh","flint",
-    "float","flock","flood","floor","flush","flute","focus","force","forge","forth","found",
-    "frame","frank","fraud","fresh","front","froze","fruit","fully","fuzzy","ghost","given",
-    "glass","gleam","glint","gloom","glory","gloss","glove","going","grace","grade","grain",
-    "grand","grant","grape","grasp","grass","grave","graze","greed","greet","grief","groan",
-    "group","grove","guard","guess","guide","guild","guile","guise","gusto","happy","haven",
-    "heard","heart","heavy","hedge","hence","house","human","humor","hurry","image","imply",
-    "index","inner","input","issue","judge","juice","juicy","knack","knife","knock","known",
-    "label","lance","large","laser","laugh","layer","lease","least","legal","level","limit",
-    "liner","liver","lobby","local","lodge","logic","loose","lower","loyal","lunar","lusty",
-    "magic","maker","manor","maple","march","match","mayor","medal","mercy","merge","merit",
-    "metal","model","money","month","moral","motor","motto","mound","mount","mouse","mouth",
-    "movie","muddy","music","nasty","noble","noise","north","novel","nurse","nymph","occur",
-    "offer","often","order","other","outer","owner","paint","panic","paper","pause","peace",
-    "penny","photo","piano","pilot","pitch","plain","plane","plant","plate","plaza","plead",
-    "pleat","pluck","plume","point","poker","polar","pound","price","pride","prime","print",
-    "prior","prize","probe","prove","prowl","psalm","puffy","pulse","pupil","purse","quake",
-    "queen","query","quest","quick","quiet","quota","quote","radar","radio","rally","ranch",
-    "range","rapid","ratio","reach","realm","rebel","recap","relay","remix","renew","repay",
-    "rider","ridge","rifle","risky","rival","river","robot","rocky","rouge","rough","round",
-    "route","royal","ruler","rural","sadly","saint","salad","sauce","scale","scare","scene",
-    "scent","score","scout","screw","scrub","seize","sense","serve","seven","shade","shaft",
-    "shake","shall","shame","shark","sharp","shear","sheen","sheer","sheet","shelf","shell",
-    "shift","shock","shore","shout","shove","sight","since","sixth","sixty","slack","slain",
-    "slash","slave","sleek","sleep","slice","slide","slime","sling","slope","sloth","smart",
-    "smash","smear","smoke","snack","snake","snare","sneak","solid","solve","sorry","south",
-    "space","spare","spark","speak","spear","speck","speed","spell","spend","spice","spill",
-    "spite","split","spoke","squad","stain","stair","stale","stall","stamp","stand","stare",
-    "stark","start","state","steam","steel","steep","steer","stern","stiff","sting","stone",
-    "stood","stoop","storm","story","stout","stove","stray","strip","strut","study","style",
-    "sugar","suite","sunny","super","surge","swamp","swear","sweat","sweep","sweet","swept",
-    "swift","swirl","sword","swore","sworn","table","taunt","taste","teach","tempo","tense",
-    "tenth","terms","theft","theme","thick","thing","think","third","thorn","three","threw",
-    "throw","thumb","tiger","tight","timer","tired","title","today","token","torch","total",
-    "touch","tough","tower","towel","trace","track","trade","train","trait","tramp","trend",
-    "trial","trick","tried","trill","troop","trout","truck","truly","trump","trunk","truth",
-    "tulip","tumor","tuner","tweak","twice","twist","under","unify","union","unity","until",
-    "upper","upset","urban","usage","usher","usual","utter","valid","valor","value","valve",
-    "vapor","vault","verse","video","vigor","viral","virus","visit","vista","vital","vivid",
-    "vixen","vocal","voice","voter","waste","watch","water","weave","wedge","weigh","weird",
-    "where","while","white","whole","whose","wider","witty","woman","women","world","worry",
-    "worse","worst","worth","would","wound","wrote","young","youth","zebra",
-  ],
-  animals: [
-    "ant","ape","bat","bee","cat","cod","cow","cub","doe","dog","elk","emu","ewe","fly",
-    "fox","gnu","hen","hog","jay","koi","owl","pig","ram","rat","yak","bear","bird","boar",
-    "buck","bull","calf","clam","colt","crab","crow","deer","dove","duck","fawn","flea",
-    "frog","gnat","goat","hare","hawk","ibis","kite","lamb","lark","lion","loon","lynx",
-    "mink","mole","moth","mule","newt","pony","puma","slug","swan","toad","vole","wasp",
-    "wolf","wren","adder","bison","crane","dingo","eagle","egret","finch","gecko","guppy",
-    "hippo","horse","hound","hyena","koala","llama","macaw","moose","mouse","otter","panda",
-    "quail","raven","shark","skunk","sloth","snake","squid","stork","tapir","tiger","trout",
-    "viper","whale","zebra","alpaca","beaver","bobcat","canary","condor","donkey","falcon",
-    "ferret","gibbon","iguana","jaguar","lizard","locust","magpie","monkey","parrot","pigeon",
-    "rabbit","salmon","spider","toucan","turkey","turtle","walrus","weasel","badger","beetle",
-    "buffalo","chicken","dolphin","gorilla","hamster","leopard","lobster","panther","penguin",
-    "raccoon","sparrow","vulture","cheetah","elephant","flamingo","hedgehog","kangaroo",
-    "porcupine","alligator","armadillo",
-  ],
-  animalsEasy: [
-    "ant","bat","bee","cat","cow","dog","elk","emu","fly","fox","hen","hog","owl","pig",
-    "ram","rat","bear","bull","calf","crab","crow","deer","dove","duck","fish","frog","goat",
-    "hare","hawk","lamb","lion","mole","mule","pony","swan","toad","wolf","wren","crane",
-    "eagle","finch","gecko","hippo","horse","hyena","koala","llama","moose","mouse","otter",
-    "panda","shark","skunk","sloth","snake","stork","tiger","whale","zebra","donkey","monkey",
-    "parrot","rabbit","salmon","spider","turtle","walrus","chicken","dolphin","gorilla",
-    "leopard","penguin","raccoon","cheetah","elephant","flamingo","kangaroo",
-  ],
-  countries: [
-    "chad","cuba","fiji","iran","iraq","laos","mali","oman","peru","togo","china","egypt",
-    "ghana","india","italy","japan","kenya","libya","nepal","niger","qatar","spain","sudan",
-    "syria","tonga","wales","yemen","angola","belize","brazil","canada","cyprus","france",
-    "greece","guinea","guyana","israel","jordan","kuwait","malawi","mexico","monaco","norway",
-    "panama","poland","rwanda","serbia","sweden","taiwan","turkey","uganda","albania","algeria",
-    "armenia","austria","bahrain","belarus","belgium","bolivia","burundi","comoros","croatia",
-    "denmark","ecuador","eritrea","estonia","finland","georgia","germany","grenada","hungary",
-    "iceland","ireland","jamaica","lebanon","lesotho","liberia","moldova","mongolia","morocco",
-    "myanmar","namibia","nigeria","pakistan","romania","senegal","somalia","ukraine","uruguay",
-    "vietnam","zambia","zimbabwe","cambodia","colombia","djibouti","dominica","ethiopia",
-    "honduras","kiribati","malaysia","maldives","portugal","slovakia","slovenia","suriname",
-    "tanzania","thailand","barbados","bulgaria","indonesia","lithuania","mauritius","singapore",
-  ],
-  cities: [
-    "rome","lima","oslo","bern","doha","riga","cairo","dubai","paris","tokyo","delhi","lagos",
-    "dhaka","accra","hanoi","seoul","miami","abuja","tunis","osaka","vienna","prague","warsaw",
-    "athens","lisbon","dublin","moscow","sydney","taipei","nairobi","jakarta","karachi",
-    "bangkok","beijing","chicago","houston","toronto","montreal","berlin","madrid","london",
-    "havana","bogota","manila","mumbai","shanghai","brussels","istanbul","singapore","amsterdam",
-    "budapest","helsinki","stockholm","melbourne","auckland","santiago","caracas","casablanca",
-    "johannesburg","copenhagen","edinburgh","manchester","barcelona","frankfurt","hamburg",
-  ],
-  foods: [
-    "ale","bun","jam","pie","tea","fig","ham","oat","rye","cod","egg","oil","rum","gin",
-    "beef","beet","bran","brie","cake","chip","clam","corn","crab","dill","duck","feta",
-    "fish","flan","herb","kale","lamb","leek","lime","lard","mayo","meat","milk","mint",
-    "miso","naan","oats","okra","pear","pita","plum","pork","rice","sage","salt","soup",
-    "soya","stew","taco","tofu","tuna","wine","yolk","apple","basil","berry","bread","brine",
-    "broth","candy","celery","cheese","chili","chips","cider","clove","cocoa","cream","curry",
-    "dates","donut","dough","drink","flour","fudge","grape","gravy","guava","honey","juice",
-    "kebab","lemon","liver","lychee","mango","maple","melon","mocha","olive","onion","pasta",
-    "peach","pecan","pesto","pizza","prawn","punch","ramen","salad","sauce","scone","shrimp",
-    "snack","spice","squid","steak","sugar","sweet","syrup","thyme","toast","vodka","waffle",
-    "wheat","yogurt","almond","banana","brandy","butter","cashew","cherry","coffee","cookie",
-    "fennel","garlic","ginger","lobster","muffin","orange","papaya","pepper","potato","radish",
-    "salmon","tomato","turkey","walnut","anchovy","avocado","broccoli","brownie","burrito",
-    "coconut","custard","granola","lettuce","pancake","parsley","peanut","pretzel","pudding",
-    "sausage","spinach","vanilla","whiskey","zucchini","blueberry","chocolate","cinnamon",
-    "croissant","mushroom","raspberry","strawberry",
-  ],
-  nature: [
-    "ash","bay","bog","clay","crag","dew","fen","fog","gem","ice","ivy","kelp","lake","lava",
-    "leaf","loam","mesa","mist","moss","mud","oak","peat","pine","pond","pool","rain","reef",
-    "rock","sand","silt","snow","soil","star","stem","tide","vale","wave","wind","wood","bark",
-    "bush","cliff","cloud","coast","coral","creek","crest","crop","dale","dell","dune","dust",
-    "fern","fjord","flora","frost","gale","glade","gorge","grain","grass","grove","gust","hail",
-    "heath","hedge","hill","inlet","isle","knoll","loch","marsh","mire","moon","mound","pebble",
-    "petal","plain","plant","ridge","river","roots","rose","shore","shrub","slope","stalk",
-    "stone","storm","stream","swamp","thorn","trail","water","amber","basalt","canyon","cavern",
-    "comet","crater","crystal","desert","drought","eclipse","estuary","forest","glacier",
-    "granite","harvest","horizon","island","jungle","lagoon","meteor","mineral","monsoon",
-    "mountain","nebula","ocean","prairie","quartz","ravine","savanna","seabed","sierra",
-    "solstice","spring","steppe","tempest","terrain","thunder","tornado","tropics","tsunami",
-    "twilight","typhoon","volcano","waterfall","wilderness","zephyr",
-  ],
-  colors: [
-    "red","tan","bay","ash","sky","jet","gold","blue","cyan","gray","grey","jade","lime","navy",
-    "pink","plum","rose","rust","ruby","sage","teal","wine","amber","azure","beige","black",
-    "brown","coral","cream","denim","ebony","green","ivory","khaki","lemon","lilac","mauve",
-    "mocha","ochre","olive","peach","sandy","sepia","slate","straw","taupe","umber","white",
-    "aqua","bronze","cobalt","copper","crimson","forest","fuchsia","garnet","indigo","maroon",
-    "mustard","orange","orchid","salmon","scarlet","silver","sienna","violet","yellow","burgundy",
-    "cerulean","charcoal","chartreuse","chocolate","lavender","magenta","midnight","saffron",
-    "sapphire","tangerine","turquoise","vermillion",
-  ],
-  emotions: [
-    "awed","calm","glad","hurt","keen","mild","numb","smug","torn","wild","angry","brave","eager",
-    "happy","livid","moody","proud","ready","rigid","sorry","sweet","tense","tired","upset","vexed",
-    "wary","weary","afraid","amused","bored","elated","empty","frantic","furious","gloomy","guilty",
-    "hopeful","joyful","lonely","loving","mellow","pained","rested","scared","shaken","shocked",
-    "sulky","tender","uneasy","wistful","worried","zealous","anxious","ashamed","content","curious",
-    "devoted","ecstatic","excited","focused","forlorn","gleeful","grumpy","hostile","humbled",
-    "jealous","jittery","jubilant","longing","peaceful","relieved","remorseful","resentful",
-    "restless","romantic","serene","thankful","thrilled","troubled",
-  ],
-  sports: [
-    "polo","golf","judo","luge","yoga","swim","race","run","ski","box","dive","surf","bike",
-    "bowl","curl","fish","hunt","jump","kick","lift","pull","push","row","spar","trek","archery",
-    "chess","climb","cycle","dance","drill","hurdle","kayak","pitch","press","rugby","shoot",
-    "skate","squat","throw","vault","badminton","baseball","football","handball","lacrosse",
-    "marathon","rowing","sailing","skating","soccer","softball","swimming","tennis","volleyball",
-    "basketball","bicycling","croquet","darts","fencing","gymnastics","hockey","motocross",
-    "rafting","skiing","snowboard","squash","triathlon","weightlifting","wrestling","canoeing",
-    "kickboxing","skydiving","athletics",
-  ],
-  professions: [
-    "chef","monk","maid","spy","vet","aide","dean","mage","sage","actor","agent","baker","boxer",
-    "coach","clerk","coder","cook","diver","judge","mayor","medic","miner","nurse","pilot","rabbi",
-    "rider","scout","smith","tutor","usher","vicar","barber","bishop","broker","butler","captain",
-    "cashier","cleric","cooper","curate","dancer","dealer","deputy","doctor","driver","editor",
-    "expert","farmer","fisher","jockey","lawyer","lender","logger","marshal","midwife","miller",
-    "officer","painter","pastor","plumber","porter","potter","priest","ranger","sailor","singer",
-    "tailor","trader","warden","weaver","worker","analyst","chemist","dentist","engineer","fireman",
-    "foreman","geologist","gunsmith","janitor","jeweler","lecturer","librarian","mechanic","musician",
-    "optician","organist","planner","policeman","professor","reporter","sculptor","soldier","surgeon",
-    "teacher","therapist","architect","astronomer","biologist","carpenter","conductor","consultant",
-    "contractor","counselor","custodian","economist","electrician","journalist","programmer",
-    "scientist","statistician","veterinarian",
-  ],
-};
+const ALL_ENGLISH = [
+  "ace","act","add","age","ago","aid","aim","air","all","ant","any","ape","apt","arc","are","ark","arm","art","ash","ask","ate","awe","axe","aye",
+  "bad","bag","ban","bar","bat","bay","bed","beg","bet","bid","big","bit","bow","box","boy","bud","bug","bun","bus","but","buy","cab","can","cap","car","cat","cop","cow","cry","cub","cup","cut","dab","dad","dam","dip","dot","dry","dub","dug","dye",
+  "ear","eat","egg","ego","elf","elk","elm","end","era","eve","ewe","eye","fad","fan","far","fat","fax","fed","few","fib","fig","fit","fix","fly","foe","fog","for","fox","fry","fun","fur","gag","gap","gas","gel","gem","get","gnu","god","got","gum","gun","gut","guy","gym",
+  "had","ham","has","hat","hay","hen","her","hew","hid","him","hip","his","hit","hog","hop","hot","how","hub","hug","hum","ice","ill","imp","inn","ion","its","jab","jag","jam","jar","jaw","jet","jog","joy","jug","jut","keg","key","kid","kin",
+  "lab","lad","lag","lap","law","lax","lay","led","leg","let","lid","lip","log","lot","low","lug","mad","man","map","mar","mat","max","may","men","met","mob","mod","mom","mud","mug","nab","nag","nap","net","new","nip","nod","nor","not","now","nun",
+  "oar","oat","odd","ode","off","oil","old","one","opt","orb","our","out","owe","own","pad","pal","pan","par","pat","paw","pay","peg","pen","pep","per","pet","pew","pin","pit","ply","pod","pop","pot","pow","pro","pub","pup","put",
+  "rag","ran","rap","raw","ray","red","ref","rep","rev","rib","rid","rim","rip","rob","rod","rot","row","rub","rug","rum","run","rut","rye","sag","sap","sat","saw","say","set","sew","sip","sir","sit","six","ski","sky","sly","sob","sod","son","sow","soy","spa","spy","sty","sub","sum","sun",
+  "tab","tan","tar","tax","tip","toe","ton","too","top","tot","tow","toy","try","tub","tug","two","urn","use","van","vat","via","vim","vow","wad","war","was","wax","web","wed","wet","who","why","wig","win","wit","woe","wok","won","woo","wow","yam","yap","yen","yet","yew","you","zap","zip","zoo",
+  "able","ache","acid","acre","aged","aide","akin","also","alto","amid","anti","apex","area","arid","army","atom","aunt","awed","axle","bait","bake","bald","bale","ball","balm","band","bane","bang","bank","bare","bark","barn","base","bash","bask","bass","bath","bawl",
+  "bead","beak","beam","bean","beer","beet","bell","belt","bend","bile","bill","bind","bird","bite","blot","blow","blue","blur","boar","bold","bolt","bond","bore","born","boss","both","brag","bray","brow","buff","bulk","bull","bump","bunk","burp","buzz",
+  "calf","calm","came","camp","cane","cape","care","carp","cart","cave","chad","chap","chat","chef","chew","chin","chip","chit","cite","clad","clam","clap","claw","clay","clip","clog","clot","club","clue","coal","coat","coil","coin","cold","colt","come","cone","cook","cool","copy","cord","core","cork","corn","cost","cozy","cram","cred","crib","crop","crow","crud","cuff","cull","curb","curd","curl","curt","cute",
+  "daft","damp","dare","darn","dart","data","date","daze","dead","deaf","deal","dear","deed","deem","deep","deer","deft","dent","deny","dice","dill","dime","dine","ding","disk","dish","dive","dock","dole","dolt","dome","done","doom","dope","dose","dote","dour","dove","drab","drag","dram","draw","drip","drop","drug","drum","dual","dumb","dump","dune","dung","dupe",
+  "each","earn","ease","eave","edge","edit","epic","even","evil","exam","fawn","feud","fill","film","find","fire","fish","fizz","flag","flat","flaw","flea","fled","flew","flex","flop","flow","foam","fold","folk","fond","font","food","fool","ford","fore","fork","form","fort","foul","fray","fret","fume",
+  "gale","gall","game","gape","garb","gash","gave","gawk","gaze","geld","gild","gilt","give","glad","glib","glob","gnaw","goad","gong","gore","gory","gust","hack","hale","half","hall","halt","hank","harm","haul","heal","heap","heat","heel","help","hemp","herb","herd","hike","hilt","hive","hoax","hock","hold","hole","hood","hoof","hook","hoot","horn","hour","hulk","hull","hump","hunk","hymn",
+  "icon","iffy","iota","iris","isle","itch","jade","jail","jest","jibe","jilt","jinx","joke","jolt","junk","just","keen","kill","kiln","kind","knew","knot","lack","lair","lake","lame","lamp","land","lane","lark","lash","last","laud","lawn","laze","lazy","leaf","leak","lean","leap","lend","lens","levy","lick","lift","lilt","lime","limp","line","link","lobe","loch","lock","loft","loin","long","look","loom","loon","lore","loud","love","luck","lump","lung","lure","lurk","lush",
+  "mace","made","maid","mail","main","make","mall","mane","mare","mark","marl","mart","mask","mast","maze","mead","meal","mean","melt","mesh","mile","milk","mill","mime","mind","mire","miss","mist","moat","mock","mode","mole","molt","monk","moon","more","moss","moth","muck","muse","must","myth",
+  "narc","near","neck","need","nerd","nest","nice","nigh","node","none","nook","norm","nose","note","noun","nude","null","oboe","odds","odor","omen","once","only","opus","oval","oven","pair","pang","pare","park","pave","pawn","peak","peat","peel","peer","pelt","pest","pick","pier","pike","pill","pine","pity","plan","plod","plot","plow","ploy","plum","poem","poke","pole","poll","pond","pore","pose","post","pour","pout","prey","prod","prop","prow","pull","pulp","pump","pyre",
+  "rack","raft","raid","rail","rain","rake","ramp","rang","rank","rare","rash","rate","rave","real","reed","reef","reel","rein","rent","rest","rift","ring","rind","riot","ripe","rise","risk","rite","road","roam","robe","rock","rode","role","roll","romp","roof","room","root","rope","rose","rote","rout","rove","ruin","rule","ruse","rush","rust",
+  "safe","sage","sail","sake","sane","sang","sash","save","seal","seam","sear","seat","seed","seem","self","sell","sham","shin","shun","sill","silo","sing","sink","site","size","skin","skip","slag","slam","slap","slat","slew","slim","slip","slot","slum","slug","snag","snap","snip","snow","snub","soak","soar","sock","soda","soil","sole","song","soot","sore","soul","sour","span","spar","spat","spin","spot","spur",
+  "stab","star","stay","stem","step","stew","stir","stop","stub","stun","such","suit","sulk","sung","sunk","surf","swap","sway","sync","tack","tail","take","talc","tale","talk","tall","tame","tang","tape","taut","teak","teal","tear","teem","tell","tend","tent","term","text","tide","tier","tile","till","time","tint","tire","toad","toil","toll","tomb","tone","tong","tore","torn","toss","town","tram","tray","trim","trio","trip","trod","true","tuft","turf","tusk","type",
+  "unit","upon","urge","vain","vale","vamp","vane","vase","vast","veal","veil","vein","verb","vest","vial","vice","view","vine","vise","void","vole","volt","wade","wail","wake","walk","wand","wane","want","ware","wart","wash","wasp","weak","wean","weed","well","welt","what","when","wide","wild","will","wind","wine","wing","wire","wise","wish","wisp","wolf","wood","word","wore","work","worm","wren","writ","yard","yarn","yawn","yell","yoke","zeal","zero","zest","zinc","zone","zoom",
+  "abbey","abyss","acorn","acute","adage","adept","admit","adobe","aegis","afoot","agile","aglow","agony","ahead","aisle","alarm","album","algae","alibi","align","aloft","aloof","altar","amaze","ample","angel","angry","annex","antic","anvil","aorta","aptly","arbor","ardor","armor","aroma","array","atone","attic","avail","avert","avoid","await","awash","awful","axiom",
+  "bacon","badge","banjo","baron","batch","beast","beech","belle","belly","bench","birch","bison","bland","blaze","bleak","bleat","bleed","blend","bless","blimp","blink","block","blood","bloom","blown","blunt","board","boggy","bogus","booze","botch","boxer","braid","brake","brawl","brawn","broil","brood","broom","brunt","brush","brute","bully","burly",
+  "cacao","cache","cadet","camel","cameo","cargo","carol","caste","cedar","chaff","chafe","champ","cheap","chide","choir","chump","chute","cinch","civic","civil","cleft","click","cliff","cling","cloak","clone","clout","cocoa","comet","comic","conch","coral","couch","covet","cower","cramp","crane","crank","creak","creep","crimp","croak","crude","cruel","crumb","crypt","cubic","cycle",
+  "daunt","decay","decoy","delta","demon","depot","derby","disco","dodge","dogma","dowry","drool","droop","drove","drown","dunce","dwarf","dying","eager","early","easel","eight","elbow","elder","elite","ember","enjoy","ensue","envoy","equip","erode","essay","ethos","evoke","exact","exert","extol","exult",
+  "fable","facet","fairy","false","farce","fatal","fault","feast","fiend","fifth","fight","finch","fjord","flame","flank","flare","flask","flesh","flint","flock","flood","floor","fluid","flute","force","forte","fungi","funny","gaudy","gauze","gavel","giddy","girth","glare","gleam","glint","gloat","gloom","gloss","glove","glyph","gnome","gouge","grail","grave","graze","greed","greet","grief","grime","grind","gripe","groan","groin","groom","guile","guise","gulch","gusto","gypsy",
+  "haste","haunt","haven","havoc","heave","hedge","heist","hence","heron","hippo","hoard","howdy","hunch","hyper","icing","igloo","image","impel","imply","inlet","ivory","jaunt","jewel","jiffy","joust","knack","knave","kneel","knife","knock","known","kudos","lance","large","laser","lasso","latch","leach","leafy","leech","libel","lilac","liver","llama","lodge","lotus","lucid","lusty","lyric",
+  "magic","manly","manor","marsh","maxim","melon","mercy","mirth","miser","model","money","month","moose","mourn","mucus","muddy","mulch","murky","music","naval","nervy","nifty","noble","notch","nymph","ocean","onset","optic","orbit","outdo","ovoid","ozone",
+  "paddy","pagan","panel","papal","payee","pearl","pedal","penny","peril","petty","plaid","plane","plank","plaza","plead","pluck","plume","plush","polka","poppy","posit","pouch","prank","preen","primo","prism","privy","probe","prone","prowl","prude","prune","psalm","pudgy","putty","quaff","qualm","quash","query","queue","quill","quirk","quota",
+  "rabid","radar","raven","rayon","realm","rebut","redux","regal","reign","relax","repel","repay","retro","rider","ripen","rivet","robot","rogue","rouge","rocky","rowdy","rugby","rusty","saint","salsa","savvy","scald","scalp","scamp","scant","scare","scarf","scene","scone","scorn","scour","scout","scowl","scram","screw","scrub","seize","seven","sever","shack","shaft","shake","shale","shark","shawl","sheen","sheer","shelf","shift","shoal","shock","shone","shook","shout","shove","shred","shrew","shrug","skirt","skull","skunk","slack","slain","slang","slant","slash","slave","sleek","sleep","sleet","slice","slick","slide","slime","sling","slink","slosh","sloth","slump",
+  "smack","smash","smear","smell","smelt","smirk","smoke","snack","snake","snare","sneak","snide","sniff","snout","solar","solve","sonic","south","spank","spark","spawn","speak","spear","spend","spice","spill","spine","spire","spite","spore","sport","spout","spree","squad","squat","squid","stack","staff","stain","stair","stale","stall","stamp","stare","stark","start","stash","state","steed","steel","steep","steer","stern","stiff","sting","stink","stomp","stool","stoop","storm","stout","stove","straw","stray","strip","strum","strut","stuck","study","stuff","stump","stung","stunk","style","suave","sunny","super","surge","swamp","swear","sweat","sweep","swept","swift","swill","swirl","swoon","swoop","sword",
+  "taboo","taunt","tapir","tardy","tempo","tense","their","thief","thigh","thing","think","thorn","those","throb","throw","tiger","tilde","timer","tipsy","title","today","tonic","topaz","torch","total","totem","touch","towel","toxic","track","trade","trail","train","tramp","trash","trawl","tread","trend","tribe","trick","tried","trite","troth","trout","trove","truce","truck","trump","trunk","tryst","tulip","tumor","tuner","tweet","twist","tying",
+  "ulcer","umbra","under","unify","union","unity","until","upper","upset","usher","usurp","utter","uvula","vague","valor","value","valve","vapid","vapor","vault","vaunt","verge","verse","vexed","vicar","vigil","vigor","villa","viral","visor","vixen","vocal","voter","vying","wager","waltz","watch","water","weave","wedge","weird","whack","whiff","whine","whirl","whisk","whole","widow","wimpy","wince","witch","wrath","wrist","yearn","young","youth","zesty",
+  "abduct","ablaze","aboard","abrupt","absorb","absurd","accent","accord","accrue","acquit","adhere","adjust","admire","advice","affirm","afford","afloat","afraid","agenda","aghast","alight","allure","almond","alpaca","always","ambush","animal","anneal","annual","anoint","anyway","aplomb","appeal","arcane","archer","ardent","assail","astray","attain","august","awhile",
+  "badger","baffle","ballot","bamboo","banish","banner","banter","barren","barter","beacon","befall","before","behalf","bestow","betray","blight","blonde","blossom","blouse","borrow","bounce","bovine","branch","brassy","breach","bridle","broken","bronze","brooch","bruise","brutal","bumble","burrow",
+  "cactus","candid","canine","cannon","canopy","canyon","carbon","casino","casket","castle","cinder","circle","circus","clergy","clever","closet","cobalt","cobweb","cohere","colony","combat","commit","common","compel","comply","concur","condor","confer","consul","convex","convey","copper","corner","corset","cotton","coyote","crisis","custom",
+  "dagger","damage","dampen","dangle","daring","darken","deadly","debris","decent","decide","deepen","defend","define","deform","demand","desert","design","detour","devoid","devour","differ","direct","divide","double","driven","duster","dynamo",
+  "easily","effect","elapse","empire","employ","enable","endure","engulf","entail","entice","entire","enzyme","equate","escape","evolve","excess","excite","exempt","exhale","expand","expire","extend","famine","famous","fathom","felony","ferret","fester","filter","finale","finger","fiscal","flight","formal","foster","freeze","frenzy","fringe","frosty","frozen","fumble",
+  "galley","gallop","garner","gentle","geyser","gibbon","goblin","gravel","grieve","guilty","hamper","handle","harbor","hardly","herald","hermit","huddle","humble","hunter","hustle","ignite","immune","impact","impede","import","infuse","inhale","injure","insane","insult","invade","ironic","jungle","jester","jostle","jumble","kidnap","lament","lavish","likely","linear","liquid","loathe","locket","logger","lunacy",
+  "mangle","mayhem","meddle","mentor","marvel","mellow","method","mirror","morale","mostly","motley","muddle","murmur","mutiny","mutual","mystic","negate","nettle","nimble","notion","novice","nuzzle","ordeal","ornate","outfit","outlaw","outrun",
+  "pallor","pardon","parrot","patrol","pebble","pellet","pencil","pounce","powder","prison","profit","pursue","quaint","rabble","rancor","random","ransom","ravage","recess","reduce","refine","refuge","regain","regent","reject","relate","relief","relish","remain","render","repent","rescue","resist","retort","reveal","revolt","reward","ribbon","riddle","ripple","ritual","robust","rugged","rattle",
+  "sadden","salute","sample","savage","scheme","scorch","scream","seldom","settle","sickle","simple","sinful","sleuth","sliver","smudge","snatch","soothe","spleen","sprawl","spring","sprout","squall","squeak","squeal","squint","stable","stench","stereo","stolen","stooge","strain","strand","strife","stroke","stroll","sucker","sudden","suffer","summon","sunder","sunset","supple","symbol",
+  "tangle","tailor","talent","throne","thrash","thread","thrill","thrive","toggle","toucan","touchy","treaty","tremor","tribal","trifle","triple","tyrant","unruly","update","uphold","upkeep","vacuum","vanish","velvet","vendor","versus","victim","violet","virile","virtue","vision","vivify","volley","wallet","wallow","walrus","wander","weaken","weasel","whimsy","wicker","wither","wonder","wraith","writhe","yearly","zealot",
+];
 
-const CATEGORY_LABELS = {
-  allEnglish: "All English",
-  animals: "Animals",
-  animalsEasy: "Animals Easy",
-  countries: "Countries",
-  cities: "Cities",
-  foods: "Foods",
-  nature: "Nature",
-  colors: "Colors",
-  emotions: "Emotions",
-  sports: "Sports",
-  professions: "Professions",
-};
+const ANIMALS=["ant","ape","bat","bee","cat","cod","cow","cub","doe","dog","elk","emu","ewe","fly","fox","gnu","hen","hog","jay","koi","owl","pig","ram","rat","yak","bear","bird","boar","buck","bull","calf","clam","colt","crab","crow","deer","dove","duck","fawn","flea","frog","gnat","goat","hare","hawk","ibis","kite","lamb","lark","lion","loon","lynx","mink","mole","moth","mule","newt","pony","puma","slug","swan","toad","vole","wasp","wolf","wren","adder","bison","crane","dingo","eagle","egret","finch","gecko","guppy","hippo","horse","hound","hyena","koala","llama","macaw","moose","mouse","otter","panda","quail","raven","shark","skunk","sloth","snake","squid","stork","tapir","tiger","trout","viper","whale","zebra","alpaca","beaver","bobcat","canary","condor","donkey","falcon","ferret","gibbon","iguana","jaguar","lizard","locust","magpie","monkey","parrot","pigeon","rabbit","salmon","spider","toucan","turkey","turtle","walrus","weasel","badger","beetle","buffalo","chicken","dolphin","gorilla","hamster","leopard","lobster","panther","penguin","raccoon","sparrow","vulture","cheetah","elephant","flamingo","hedgehog","kangaroo","porcupine","alligator","armadillo","orangutan","chameleon","barracuda","chimpanzee"];
+const ANIMALS_EASY=["ant","bat","bee","cat","cow","dog","elk","emu","fly","fox","hen","hog","owl","pig","ram","rat","bear","bull","calf","crab","crow","deer","dove","duck","fish","frog","goat","hare","hawk","lamb","lion","mole","mule","pony","swan","toad","wolf","wren","crane","eagle","finch","gecko","hippo","horse","hyena","koala","llama","moose","mouse","otter","panda","shark","skunk","sloth","snake","stork","tiger","whale","zebra","donkey","monkey","parrot","rabbit","salmon","spider","turtle","walrus","chicken","dolphin","gorilla","leopard","penguin","raccoon","cheetah","elephant","flamingo","kangaroo"];
+const COUNTRIES=["chad","cuba","fiji","iran","iraq","laos","mali","oman","peru","togo","china","egypt","ghana","india","italy","japan","kenya","libya","nepal","niger","qatar","spain","sudan","syria","tonga","wales","yemen","angola","belize","brazil","canada","cyprus","france","greece","guinea","guyana","israel","jordan","kuwait","malawi","mexico","monaco","norway","panama","poland","rwanda","serbia","sweden","taiwan","turkey","uganda","albania","algeria","armenia","austria","bahrain","belarus","belgium","bolivia","burundi","comoros","croatia","denmark","ecuador","eritrea","estonia","finland","georgia","germany","grenada","hungary","iceland","ireland","jamaica","lebanon","lesotho","liberia","moldova","mongolia","morocco","myanmar","namibia","nigeria","pakistan","romania","senegal","somalia","ukraine","uruguay","vietnam","zambia","zimbabwe","cambodia","colombia","djibouti","dominica","ethiopia","honduras","kiribati","malaysia","maldives","portugal","slovakia","slovenia","suriname","tanzania","thailand","barbados","bulgaria","indonesia","lithuania","mauritius","singapore","argentina","australia","azerbaijan","bangladesh","mozambique","madagascar","tajikistan","uzbekistan","kyrgyzstan","kazakhstan","afghanistan"];
+const CITIES=["rome","lima","oslo","bern","doha","riga","cairo","dubai","paris","tokyo","delhi","lagos","dhaka","accra","hanoi","seoul","miami","abuja","tunis","osaka","vienna","prague","warsaw","athens","lisbon","dublin","moscow","sydney","taipei","london","berlin","madrid","havana","bogota","manila","mumbai","nairobi","jakarta","karachi","bangkok","beijing","chicago","houston","toronto","montreal","shanghai","brussels","istanbul","singapore","amsterdam","budapest","helsinki","stockholm","melbourne","auckland","santiago","caracas","casablanca","johannesburg","copenhagen","edinburgh","manchester","barcelona","frankfurt","hamburg","kathmandu","islamabad","tashkent","yerevan","tbilisi","almaty","bishkek","minsk","chisinau","tallinn","vilnius","sofia","bucharest","belgrade","zagreb","skopje","tirana","sarajevo","podgorica","reykjavik","wellington","canberra","ottawa","brasilia","quezon","naypyidaw","vientiane","phnom penh","dushanbe","ashgabat","nur sultan","kabul","tehran","baghdad","damascus","beirut","amman","riyadh","jeddah","muscat","manama","sanaa","doha","kuwait city","abu dhabi","ankara","nicosia","valletta","luxembourg","monaco city","vaduz","san marino","bern","zurich","geneva","vienna","salzburg","graz","linz","brussels","antwerp","ghent","bruges","amsterdam","rotterdam","the hague","eindhoven","copenhagen","aarhus","odense","stockholm","gothenburg","malmo","oslo","bergen","trondheim","helsinki","tampere","turku","dublin","cork","galway","london","birmingham","manchester","glasgow","edinburgh","cardiff","belfast","paris","lyon","marseille","toulouse","bordeaux","nice","nantes","strasbourg","lille","rennes","grenoble","berlin","munich","hamburg","frankfurt","cologne","stuttgart","dusseldorf","dortmund","essen","leipzig","dresden","hanover","nuremberg","duisburg","rome","milan","naples","turin","palermo","genoa","bologna","florence","venice","catania","bari","madrid","barcelona","valencia","seville","zaragoza","malaga","murcia","palma","lisbon","porto","braga","coimbra","warsaw","krakow","lodz","poznan","wroclaw","gdansk","budapest","debrecen","miskolc","bucharest","cluj","timisoara","sofia","plovdiv","varna","athens","thessaloniki","patras","heraklion","prague","brno","ostrava","bratislava","kosice","zagreb","split","rijeka","sarajevo","banja luka","belgrade","novi sad","nis","skopje","bitola","tirana","durres","podgorica","pristina","chisinau","minsk","brest","grodno","kyiv","kharkiv","odessa","dnipro","lviv","moscow","saint petersburg","novosibirsk","yekaterinburg","kazan","nizhny novgorod","chelyabinsk","samara","omsk","rostov","ufa","voronezh","perm","volgograd","krasnodar"];
+const FOODS=["ale","bun","jam","pie","tea","fig","ham","oat","rye","cod","egg","oil","rum","gin","beef","beet","bran","brie","cake","chip","clam","corn","crab","dill","duck","feta","fish","flan","herb","kale","lamb","leek","lime","lard","mayo","meat","milk","mint","miso","naan","oats","okra","pear","pita","plum","pork","rice","sage","salt","soup","soya","stew","taco","tofu","tuna","wine","yolk","apple","basil","berry","bread","brine","broth","candy","cheese","chili","chips","cider","clove","cocoa","cream","curry","dates","donut","dough","drink","flour","fudge","grape","gravy","guava","honey","juice","kebab","lemon","liver","lychee","mango","maple","melon","mocha","olive","onion","pasta","peach","pecan","pesto","pizza","prawn","punch","ramen","salad","sauce","scone","shrimp","snack","spice","squid","steak","sugar","sweet","syrup","thyme","toast","vodka","waffle","wheat","yogurt","almond","banana","brandy","butter","cashew","cherry","coffee","cookie","fennel","garlic","ginger","lobster","muffin","orange","papaya","pepper","potato","radish","salmon","tomato","turkey","walnut","anchovy","avocado","broccoli","brownie","burrito","coconut","custard","granola","lettuce","pancake","parsley","peanut","pretzel","pudding","sausage","spinach","vanilla","whiskey","zucchini","blueberry","chocolate","cinnamon","croissant","mushroom","raspberry","strawberry","watermelon","cauliflower","pineapple","grapefruit","pomegranate","artichoke","asparagus","tangerine","clementine","persimmon","elderberry","gooseberry","blackberry","cranberry","nectarine"];
+const NATURE=["ash","bay","bog","clay","crag","dew","fen","fog","gem","ice","ivy","kelp","lake","lava","leaf","loam","mesa","mist","moss","mud","oak","peat","pine","pond","pool","rain","reef","rock","sand","silt","snow","soil","star","stem","tide","vale","wave","wind","wood","bark","bush","cliff","cloud","coast","coral","creek","crest","crop","dale","dell","dune","dust","fern","fjord","flora","frost","gale","glade","gorge","grain","grass","grove","gust","hail","heath","hedge","hill","inlet","isle","knoll","loch","marsh","mire","moon","mound","pebble","petal","plain","plant","ridge","river","roots","rose","shore","shrub","slope","stalk","stone","storm","stream","swamp","thorn","trail","water","amber","basalt","canyon","cavern","comet","crater","crystal","desert","drought","eclipse","estuary","forest","glacier","granite","harvest","horizon","island","jungle","lagoon","meteor","mineral","monsoon","mountain","nebula","ocean","prairie","quartz","ravine","savanna","seabed","sierra","solstice","spring","steppe","tempest","terrain","thunder","tornado","tropics","tsunami","twilight","typhoon","volcano","waterfall","wilderness","zephyr","aurora","bamboo","breeze","cobble","current","delta","erosion","geyser","grotto","habitat","iceberg","lakebed","lowland","mangrove","meadow","plateau","redwood","sandbar","seagrass","seashore","snowfall","summit","sundown","sunflower","tundra","upland","wetland","woodland"];
+const COLORS=["red","tan","bay","ash","sky","jet","gold","blue","cyan","gray","grey","jade","lime","navy","pink","plum","rose","rust","ruby","sage","teal","wine","amber","azure","beige","black","brown","coral","cream","denim","ebony","green","ivory","khaki","lemon","lilac","mauve","mocha","ochre","olive","peach","sandy","sepia","slate","straw","taupe","umber","white","aqua","bronze","cobalt","copper","crimson","forest","fuchsia","garnet","indigo","maroon","mustard","orange","orchid","salmon","scarlet","silver","sienna","violet","yellow","burgundy","cerulean","charcoal","chartreuse","chocolate","lavender","magenta","midnight","saffron","sapphire","tangerine","turquoise","vermillion","alabaster","aubergine","champagne","cornflower","goldenrod","heliotrope","mahogany","periwinkle","terracotta","ultramarine"];
+const EMOTIONS=["awed","calm","glad","hurt","keen","mild","numb","smug","torn","wild","angry","brave","eager","happy","livid","moody","proud","ready","sorry","sweet","tense","tired","upset","vexed","wary","weary","afraid","amused","bored","elated","empty","frantic","furious","gloomy","guilty","hopeful","joyful","lonely","loving","mellow","pained","rested","scared","shaken","shocked","sulky","tender","uneasy","wistful","worried","zealous","anxious","ashamed","content","curious","devoted","ecstatic","excited","focused","forlorn","gleeful","grumpy","hostile","humbled","jealous","jittery","jubilant","longing","peaceful","relieved","remorseful","resentful","restless","romantic","serene","thankful","thrilled","troubled","bewildered","captivated","depressed","disgusted","disturbed","enchanted","exhausted","fascinated","frustrated","horrified","impressed","irritated","melancholy","nostalgic","optimistic","overwhelmed","passionate","perplexed","satisfied","sensitive","skeptical","surprised","sympathetic","vulnerable"];
+const SPORTS=["polo","golf","judo","luge","yoga","swim","race","run","ski","box","dive","surf","bike","bowl","curl","fish","hunt","jump","kick","lift","pull","push","row","spar","trek","archery","chess","climb","cycle","dance","drill","hurdle","kayak","pitch","press","rugby","shoot","skate","squat","throw","vault","badminton","baseball","football","handball","lacrosse","marathon","rowing","sailing","skating","soccer","softball","swimming","tennis","volleyball","basketball","bicycling","croquet","darts","fencing","gymnastics","hockey","motocross","rafting","skiing","snowboard","squash","triathlon","weightlifting","wrestling","canoeing","kickboxing","skydiving","athletics","bobsled","curling","cycling","hurling","netball","paddling","paragliding","pentathlon","skateboard","snorkeling","surfboard","wakeboard","windsurfing","yachting"];
+const PROFESSIONS=["chef","monk","maid","spy","vet","aide","dean","mage","sage","actor","agent","baker","boxer","coach","clerk","coder","cook","diver","judge","mayor","medic","miner","nurse","pilot","rabbi","rider","scout","smith","tutor","usher","vicar","barber","bishop","broker","butler","captain","cashier","cleric","cooper","curate","dancer","dealer","deputy","doctor","driver","editor","expert","farmer","fisher","jockey","lawyer","lender","logger","marshal","midwife","miller","officer","painter","pastor","plumber","porter","potter","priest","ranger","sailor","singer","tailor","trader","warden","weaver","worker","analyst","chemist","dentist","engineer","fireman","foreman","geologist","janitor","jeweler","lecturer","librarian","mechanic","musician","optician","organist","planner","reporter","sculptor","soldier","surgeon","teacher","therapist","architect","astronomer","biologist","carpenter","conductor","consultant","contractor","counselor","custodian","economist","electrician","journalist","programmer","scientist","statistician","veterinarian","accountant","astronaut","cardiologist","cartographer","chiropractor","criminologist","dermatologist","detective","diplomat","epidemiologist","firefighter","geographer","illustrator","interpreter","mathematician","neurologist","nutritionist","oceanographer","ophthalmologist","osteopath","paramedic","pathologist","pediatrician","pharmacist","philosopher","photographer","physiotherapist","politician","professor","psychiatrist","psychologist","radiologist","recruiter","sociologist","sommelier","translator","urologist","zoologist"];
 
-// ─────────────────────────────────────────────
-// T9 + SHAPE FILTER
-// ─────────────────────────────────────────────
-const T9MAP = {};
-[..."ABC"].forEach(c => T9MAP[c]="2");
-[..."DEF"].forEach(c => T9MAP[c]="3");
-[..."GHI"].forEach(c => T9MAP[c]="4");
-[..."JKL"].forEach(c => T9MAP[c]="5");
-[..."MNO"].forEach(c => T9MAP[c]="6");
-[..."PQRS"].forEach(c => T9MAP[c]="7");
-[..."TUV"].forEach(c => T9MAP[c]="8");
-[..."WXYZ"].forEach(c => T9MAP[c]="9");
+const POOLS={allEnglish:ALL_ENGLISH,animals:ANIMALS,animalsEasy:ANIMALS_EASY,countries:COUNTRIES,cities:CITIES,foods:FOODS,nature:NATURE,colors:COLORS,emotions:EMOTIONS,sports:SPORTS,professions:PROFESSIONS};
+const CAT_LABELS={allEnglish:"All English",animals:"Animals",animalsEasy:"Animals Easy",countries:"Countries",cities:"Cities",foods:"Foods",nature:"Nature",colors:"Colors",emotions:"Emotions",sports:"Sports",professions:"Professions"};
 
-const SHAPE_CLASS = {
-  "1": new Set(["4","7"]),
-  "2": new Set(["2","5"]),
-  "3": new Set(["3","6","8","9"]),
-};
-
-function foldChar(ch){
-  return ch.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toUpperCase()[0]||"";
-}
-
-function filterByCode(code, pool){
-  return pool.filter(w=>{
-    const letters=[...w].map(foldChar).filter(Boolean);
-    if(letters.length!==code.length) return false;
-    return letters.every((ch,i)=>{
-      const d=T9MAP[ch];
-      return d && SHAPE_CLASS[code[i]]?.has(d);
-    });
-  });
-}
-
-// ─────────────────────────────────────────────
-// LETTER PICKER — depth-2 look-ahead
-// ─────────────────────────────────────────────
-function wordLetterSet(word){
-  return new Set([...word].map(foldChar).filter(Boolean));
-}
-
-function pickNextLetter(candidates, usedSet){
-  const used=new Set(usedSet);
-  const kept=[];
-
-  const eligible=(locked)=>candidates.filter(w=>{
-    const s=wordLetterSet(w);
-    return locked.every(k=>s.has(k));
-  });
-
-  const freqMap=(ws,ex)=>{
-    const m=new Map();
-    ws.forEach(w=>wordLetterSet(w).forEach(c=>!ex.has(c)&&m.set(c,(m.get(c)||0)+1)));
-    return m;
-  };
-
-  const noCount=(ws,k)=>ws.filter(w=>!wordLetterSet(w).has(k)).length;
-
+const T9MAP={};[..."ABC"].forEach(c=>(T9MAP[c]="2"));[..."DEF"].forEach(c=>(T9MAP[c]="3"));[..."GHI"].forEach(c=>(T9MAP[c]="4"));[..."JKL"].forEach(c=>(T9MAP[c]="5"));[..."MNO"].forEach(c=>(T9MAP[c]="6"));[..."PQRS"].forEach(c=>(T9MAP[c]="7"));[..."TUV"].forEach(c=>(T9MAP[c]="8"));[..."WXYZ"].forEach(c=>(T9MAP[c]="9"));
+const SHAPE={"1":new Set(["4","7"]),"2":new Set(["2","5"]),"3":new Set(["3","6","8","9"])};
+const fold=ch=>ch.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toUpperCase()[0]||"";
+function filterByCode(code,pool){return pool.filter(w=>{const l=[...w].map(fold).filter(Boolean);if(l.length!==code.length)return false;return l.every((ch,i)=>{const d=T9MAP[ch];return d&&SHAPE[code[i]]?.has(d);});});}
+function wordSet(w){return new Set([...w].map(fold).filter(Boolean));}
+function pickLetter(cands,usedSet){
+  const used=new Set(usedSet),kept=[];
+  const eligible=locked=>cands.filter(w=>locked.every(k=>wordSet(w).has(k)));
+  const freq=(ws,ex)=>{const m=new Map();ws.forEach(w=>wordSet(w).forEach(c=>!ex.has(c)&&m.set(c,(m.get(c)||0)+1)));return m;};
+  const noCount=(ws,k)=>ws.filter(w=>!wordSet(w).has(k)).length;
   while(true){
-    const pool=eligible(kept);
-    if(pool.length<=1) break;
-    const MIN=pool.length<=6?1:2;
-    const counts=freqMap(pool,used);
-    const cands=[...counts.entries()].filter(([,n])=>n>=MIN&&n<pool.length);
-    if(!cands.length) break;
-
+    const pool=eligible(kept);if(pool.length<=1)break;
+    const MIN=pool.length<=6?1:2,counts=freq(pool,used);
+    const cds=[...counts.entries()].filter(([,n])=>n>=MIN&&n<pool.length);if(!cds.length)break;
     let best=null,bS1=Infinity,bS2=Infinity;
-    for(const [k] of cands){
-      const s1=noCount(pool,k);
-      if(!s1) continue;
-      const pool2=pool.filter(w=>!wordLetterSet(w).has(k));
-      const c2=freqMap(pool2,new Set([...used,k]));
-      const MIN2=pool2.length<=6?1:2;
-      let s2=s1;
-      for(const [k2,n2] of c2.entries()){
-        if(n2<MIN2||n2>=pool2.length) continue;
-        const ss=noCount(pool2,k2);
-        if(ss>0&&ss<s2) s2=ss;
-      }
-      if(s1<bS1||(s1===bS1&&s2<bS2)){best=k;bS1=s1;bS2=s2;}
-    }
-    if(!best) break;
-    kept.push(best);
-    used.add(best);
+    for(const[k] of cds){const s1=noCount(pool,k);if(!s1)continue;const pool2=pool.filter(w=>!wordSet(w).has(k));const c2=freq(pool2,new Set([...used,k]));const MIN2=pool2.length<=6?1:2;let s2=s1;for(const[k2,n2] of c2.entries()){if(n2<MIN2||n2>=pool2.length)continue;const ss=noCount(pool2,k2);if(ss>0&&ss<s2)s2=ss;}if(s1<bS1||(s1===bS1&&s2<bS2)){best=k;bS1=s1;bS2=s2;}}
+    if(!best)break;kept.push(best);used.add(best);
   }
   return kept[kept.length-1]||null;
 }
+function getPool(cat,len){let pool=[...new Set((POOLS[cat]||POOLS.allEnglish).map(w=>w.toLowerCase().trim()))].filter(w=>/^[a-z]+$/.test(w));if(len==="3-5")pool=pool.filter(w=>w.length>=3&&w.length<=5);else if(len==="5-7")pool=pool.filter(w=>w.length>=5&&w.length<=7);else if(len==="6-8")pool=pool.filter(w=>w.length>=6&&w.length<=8);return pool;}
 
-// ─────────────────────────────────────────────
-// SETTINGS
-// ─────────────────────────────────────────────
 const DEF={cat:"allEnglish",len:"any",delay:10,pulse:120,pause:500,wall:"dark",fontSize:"medium"};
-function loadSett(){try{return{...DEF,...JSON.parse(localStorage.getItem("mc2")||"{}")}}catch{return{...DEF}}}
-function saveSett(s){try{localStorage.setItem("mc2",JSON.stringify(s))}catch{}}
+function loadS(){try{return{...DEF,...JSON.parse(localStorage.getItem("mc3")||"{}")}}catch{return{...DEF}}}
+function saveS(s){try{localStorage.setItem("mc3",JSON.stringify(s))}catch{}}
+function init(){return{screen:"idle",code:"",pool:[],kept:[],used:[],letter:"",word:"",...loadS()};}
 
-// ─────────────────────────────────────────────
-// REDUCER
-// ─────────────────────────────────────────────
-function getPool(cat,len){
-  let pool=WORDS[cat]||WORDS.allEnglish;
-  pool=[...new Set(pool.map(w=>w.toLowerCase().trim()))].filter(w=>/^[a-z]+$/.test(w));
-  if(len==="3-5") pool=pool.filter(w=>w.length>=3&&w.length<=5);
-  else if(len==="5-7") pool=pool.filter(w=>w.length>=5&&w.length<=7);
-  else if(len==="6-8") pool=pool.filter(w=>w.length>=6&&w.length<=8);
-  return pool;
-}
-
-function initState(){
-  const s=loadSett();
-  return{screen:"idle",code:"",pool:[],kept:[],used:[],letter:"",word:"",...s};
-}
-
-function reducer(state,action){
-  switch(action.type){
-    case "DIGIT":
-      return{...state,code:state.code+action.d};
-    case "CLEAR_CODE":
-      return{...state,code:""};
-    case "CONFIRM":{
-      const raw=getPool(state.cat,state.len);
-      const filtered=filterByCode(state.code,raw);
-      if(!filtered.length) return{...state,code:"",screen:"idle"};
-      if(filtered.length===1) return{...state,code:"",screen:"countdown",word:filtered[0].toUpperCase()};
-      const next=pickNextLetter(filtered,new Set());
-      if(!next) return{...state,code:"",screen:"pick",pool:filtered};
-      return{...state,code:"",screen:"question",pool:filtered,kept:[],used:[next],letter:next};
-    }
-    case "YES":{
-      const{letter:L,pool,kept,used}=state;
-      const np=pool.filter(w=>wordLetterSet(w).has(L));
-      const nk=[...kept,L];
-      const nu=new Set(used);
-      if(np.length===1) return{...state,screen:"countdown",word:np[0].toUpperCase(),pool:np,kept:nk};
-      if(!np.length) return{...state,screen:"idle",pool:[],kept:[],used:[],letter:"",code:""};
-      const next=pickNextLetter(np,nu);
-      if(!next) return{...state,screen:"pick",pool:np,kept:nk};
-      return{...state,pool:np,kept:nk,used:[...nu,next],letter:next};
-    }
-    case "NO":{
-      const{letter:L,pool,kept,used}=state;
-      const np=pool.filter(w=>{
-        const s=wordLetterSet(w);
-        if(s.has(L)) return false;
-        return kept.every(k=>s.has(k));
-      });
-      const nu=new Set(used);
-      if(np.length===1) return{...state,screen:"countdown",word:np[0].toUpperCase(),pool:np};
-      if(!np.length) return{...state,screen:"idle",pool:[],kept:[],used:[],letter:"",code:""};
-      const next=pickNextLetter(np,nu);
-      if(!next) return{...state,screen:"pick",pool:np};
-      return{...state,pool:np,used:[...nu,next],letter:next};
-    }
-    case "PICK":
-      return{...state,screen:"countdown",word:action.w.toUpperCase()};
-    case "REVEAL":
-      return{...state,screen:"reveal"};
-    case "RESET":
-      return{...initState(),screen:"idle"};
-    case "GO_SETTINGS":
-      return{...state,screen:"settings"};
-    case "GO_LIST":
-      return{...state,screen:"list"};
-    case "BACK":
-      return{...state,screen:"idle"};
-    case "SET":{
-      const ns={...state,[action.k]:action.v};
-      saveSett({cat:ns.cat,len:ns.len,delay:ns.delay,pulse:ns.pulse,pause:ns.pause,wall:ns.wall,fontSize:ns.fontSize});
-      return ns;
-    }
-    default:return state;
+function reducer(s,a){
+  switch(a.type){
+    case"DIGIT":return{...s,code:s.code+a.d};
+    case"CLEAR":return{...s,code:""};
+    case"CONFIRM":{const raw=getPool(s.cat,s.len),f=filterByCode(s.code,raw);if(!f.length)return{...s,code:"",screen:"idle"};if(f.length===1)return{...s,code:"",screen:"countdown",word:f[0].toUpperCase()};const next=pickLetter(f,new Set());if(!next)return{...s,code:"",screen:"pick",pool:f};return{...s,code:"",screen:"question",pool:f,kept:[],used:[next],letter:next};}
+    case"YES":{const{letter:L,pool,kept,used}=s,np=pool.filter(w=>wordSet(w).has(L)),nk=[...kept,L],nu=new Set(used);if(np.length===1)return{...s,screen:"countdown",word:np[0].toUpperCase(),pool:np,kept:nk};if(!np.length)return{...s,screen:"idle",pool:[],kept:[],used:[],letter:"",code:""};const next=pickLetter(np,nu);if(!next)return{...s,screen:"pick",pool:np,kept:nk};return{...s,pool:np,kept:nk,used:[...nu,next],letter:next};}
+    case"NO":{const{letter:L,pool,kept,used}=s,np=pool.filter(w=>{const ws=wordSet(w);if(ws.has(L))return false;return kept.every(k=>ws.has(k));});const nu=new Set(used);if(np.length===1)return{...s,screen:"countdown",word:np[0].toUpperCase(),pool:np};if(!np.length)return{...s,screen:"idle",pool:[],kept:[],used:[],letter:"",code:""};const next=pickLetter(np,nu);if(!next)return{...s,screen:"pick",pool:np};return{...s,pool:np,used:[...nu,next],letter:next};}
+    case"PICK":return{...s,screen:"countdown",word:a.w.toUpperCase()};
+    case"REVEAL":return{...s,screen:"reveal"};
+    case"RESET":return{...init(),screen:"idle"};
+    case"SETTINGS":return{...s,screen:"settings"};
+    case"LIST":return{...s,screen:"list"};
+    case"BACK":return{...s,screen:"idle"};
+    case"SET":{const ns={...s,[a.k]:a.v};saveS({cat:ns.cat,len:ns.len,delay:ns.delay,pulse:ns.pulse,pause:ns.pause,wall:ns.wall,fontSize:ns.fontSize});return ns;}
+    default:return s;
   }
 }
 
-// ─────────────────────────────────────────────
-// VIBRATION
-// ─────────────────────────────────────────────
-const POLYBIUS="ABCDEFGHIJKLMNOPQRSTUVWXY";
-function buildVibPattern(letter,pDur=120,gDur=500){
-  const ch=letter.toUpperCase();
-  if(ch==="Z"){
-    const p=[];for(let i=0;i<6;i++){p.push(pDur);if(i<5)p.push(100);}return p;
-  }
-  const idx=POLYBIUS.indexOf(ch);
-  if(idx<0) return[pDur];
-  const row=Math.floor(idx/5)+1,col=(idx%5)+1;
-  const p=[];
-  for(let i=0;i<row;i++){p.push(pDur);if(i<row-1)p.push(100);}
-  p.push(gDur);
-  for(let i=0;i<col;i++){p.push(pDur);if(i<col-1)p.push(100);}
-  return p;
-}
-
-// ─────────────────────────────────────────────
-// MAIN APP
-// ─────────────────────────────────────────────
 export default function App(){
-  const[st,dispatch]=useReducer(reducer,null,initState);
-  const stRef=useRef(st);
-  stRef.current=st;
-
-  const audioRef=useRef(null);
-  const lastVolRef=useRef(null);
-  const volTimerRef=useRef(null);
-  const pendingUpRef=useRef(false);
-  const codeResetRef=useRef(null);
-  const cdIntervalRef=useRef(null);
-  const[cdSecs,setCdSecs]=useState(10);
+  const[st,dispatch]=useReducer(reducer,null,init);
+  const stRef=useRef(st);stRef.current=st;
+  const[flash,setFlash]=useState(null);
+  const[activated,setActivated]=useState(false);
   const[callTime,setCallTime]=useState("");
-  const[flash,setFlash]=useState(null); // "up" | "down" | null
-  const[audioReady,setAudioReady]=useState(false);
-  const[longPressTimer,setLongPressTimer]=useState(null);
-  const twoFingStart=useRef(null);
+  const[cdSecs,setCdSecs]=useState(10);
+  const cdRef=useRef(null),pendingUp=useRef(false),upTimer=useRef(null),codeTimer=useRef(null),twoStart=useRef(null);
+  const audioCtxRef=useRef(null),audioElRef=useRef(null);
 
-  // ── Volume detection via silent audio ──
-  const handleVolDir=useCallback((dir)=>{
-    const s=stRef.current;
-    // Visual feedback flash
-    setFlash(dir);
-    setTimeout(()=>setFlash(null),300);
-    // Vibrate feedback
-    if(navigator.vibrate) navigator.vibrate(30);
+  const doFlash=useCallback((dir)=>{setFlash(dir);setTimeout(()=>setFlash(null),350);if(navigator.vibrate)navigator.vibrate(40);},[]);
 
+  const handleDir=useCallback((dir)=>{
+    doFlash(dir);const s=stRef.current;
     if(s.screen==="idle"){
       if(dir==="up"){
-        if(pendingUpRef.current){
-          // double up = confirm
-          clearTimeout(volTimerRef.current);
-          pendingUpRef.current=false;
-          clearTimeout(codeResetRef.current);
-          dispatch({type:"CONFIRM"});
-        } else {
-          pendingUpRef.current=true;
-          volTimerRef.current=setTimeout(()=>{
-            if(pendingUpRef.current){
-              pendingUpRef.current=false;
-              dispatch({type:"DIGIT",d:"1"});
-              clearTimeout(codeResetRef.current);
-              codeResetRef.current=setTimeout(()=>dispatch({type:"CLEAR_CODE"}),8000);
-            }
-          },450);
-        }
+        if(pendingUp.current){clearTimeout(upTimer.current);pendingUp.current=false;clearTimeout(codeTimer.current);dispatch({type:"CONFIRM"});}
+        else{pendingUp.current=true;upTimer.current=setTimeout(()=>{if(pendingUp.current){pendingUp.current=false;dispatch({type:"DIGIT",d:"1"});clearTimeout(codeTimer.current);codeTimer.current=setTimeout(()=>dispatch({type:"CLEAR"}),8000);}},450);}
       } else {
-        if(pendingUpRef.current){
-          // up then down = digit 2
-          clearTimeout(volTimerRef.current);
-          pendingUpRef.current=false;
-          dispatch({type:"DIGIT",d:"2"});
-        } else {
-          dispatch({type:"DIGIT",d:"3"});
-        }
-        clearTimeout(codeResetRef.current);
-        codeResetRef.current=setTimeout(()=>dispatch({type:"CLEAR_CODE"}),8000);
+        if(pendingUp.current){clearTimeout(upTimer.current);pendingUp.current=false;dispatch({type:"DIGIT",d:"2"});}
+        else dispatch({type:"DIGIT",d:"3"});
+        clearTimeout(codeTimer.current);codeTimer.current=setTimeout(()=>dispatch({type:"CLEAR"}),8000);
       }
-    } else if(s.screen==="question"){
-      if(dir==="up") dispatch({type:"YES"});
-      else dispatch({type:"NO"});
-    }
-  },[]);
+    } else if(s.screen==="question"){if(dir==="up")dispatch({type:"YES"});else dispatch({type:"NO"});}
+  },[doFlash]);
 
-  // ── Init silent audio ──
-  useEffect(()=>{
-    // Build a minimal silent WAV as data URL
-    const silentWav="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
-    const audio=new Audio(silentWav);
-    audio.loop=true;
-    audio.volume=0.5;
-    lastVolRef.current=0.5;
-    audioRef.current=audio;
-
-    const onVolChange=()=>{
+  const handleActivate=()=>{
+    setActivated(true);
+    // AudioContext approach — most reliable for iOS
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    const ctx=new AC();audioCtxRef.current=ctx;
+    // Keep audio session alive with near-silent oscillator
+    const osc=ctx.createOscillator(),g=ctx.createGain();
+    g.gain.value=0.00001;osc.connect(g);g.connect(ctx.destination);osc.start();
+    // Audio element for volumechange events
+    const wav=new Uint8Array([82,73,70,70,36,0,0,0,87,65,86,69,102,109,116,32,16,0,0,0,1,0,1,0,68,172,0,0,136,88,1,0,2,0,16,0,100,97,116,97,0,0,0,0]);
+    const audio=new Audio();
+    audio.src=URL.createObjectURL(new Blob([wav],{type:"audio/wav"}));
+    audio.loop=true;audio.volume=0.5;audioElRef.current=audio;
+    let lastVol=0.5;
+    audio.addEventListener("volumechange",()=>{
       const nv=audio.volume;
-      const prev=lastVolRef.current;
-      if(prev===null){lastVolRef.current=nv;return;}
-      const dir=nv>prev?"up":"down";
-      lastVolRef.current=nv;
-      handleVolDir(dir);
-    };
-    audio.addEventListener("volumechange",onVolChange);
-    return()=>{
-      audio.removeEventListener("volumechange",onVolChange);
-      audio.pause();
-    };
-  },[handleVolDir]);
-
-  const activateAudio=()=>{
-    audioRef.current?.play().catch(()=>{});
-    setAudioReady(true);
+      if(Math.abs(nv-lastVol)<0.001){lastVol=nv;return;}
+      const dir=nv>lastVol?"up":"down";lastVol=nv;
+      handleDir(dir);
+    });
+    audio.play().then(()=>{if(ctx.state==="suspended")ctx.resume();}).catch(()=>{});
   };
 
-  // ── Countdown ──
   useEffect(()=>{
-    if(st.screen==="countdown"){
-      let secs=st.delay;
-      setCdSecs(secs);
-      cdIntervalRef.current=setInterval(()=>{
-        secs--;
-        setCdSecs(secs);
-        if(secs<=0){clearInterval(cdIntervalRef.current);dispatch({type:"REVEAL"});}
-      },1000);
-    }
-    return()=>clearInterval(cdIntervalRef.current);
+    if(st.screen==="countdown"){let secs=st.delay;setCdSecs(secs);cdRef.current=setInterval(()=>{secs--;setCdSecs(secs);if(secs<=0){clearInterval(cdRef.current);dispatch({type:"REVEAL"});}},1000);}
+    return()=>clearInterval(cdRef.current);
   },[st.screen,st.delay]);
 
-  // ── Call screen clock ──
   useEffect(()=>{
-    if(st.screen==="reveal"){
-      const upd=()=>{const d=new Date();setCallTime(`${d.getHours()%12||12}:${String(d.getMinutes()).padStart(2,"0")}`);};
-      upd();const t=setInterval(upd,1000);return()=>clearInterval(t);
-    }
+    if(st.screen==="reveal"){const upd=()=>{const d=new Date();setCallTime(`${d.getHours()%12||12}:${String(d.getMinutes()).padStart(2,"0")}`);};upd();const t=setInterval(upd,1000);return()=>clearInterval(t);}
   },[st.screen]);
 
-  // ── Two-finger swipe down → settings ──
-  const onTouchStart=useCallback((e)=>{
-    if(st.screen!=="idle") return;
-    if(e.touches.length===2){
-      twoFingStart.current={y0:e.touches[0].clientY,y1:e.touches[1].clientY};
-    }
-  },[st.screen]);
-
-  const onTouchMove=useCallback((e)=>{
-    if(e.touches.length===2&&twoFingStart.current){
-      const dy0=e.touches[0].clientY-twoFingStart.current.y0;
-      const dy1=e.touches[1].clientY-twoFingStart.current.y1;
-      if(dy0>90&&dy1>90){twoFingStart.current=null;dispatch({type:"GO_SETTINGS"});}
-    }
-  },[]);
-
-  const onTouchEnd=useCallback(()=>{twoFingStart.current=null;},[]);
+  const onTS=useCallback((e)=>{if(e.touches.length===2)twoStart.current=e.touches[0].clientY;},[]);
+  const onTM=useCallback((e)=>{if(e.touches.length===2&&twoStart.current!==null){if(e.touches[0].clientY-twoStart.current>90){twoStart.current=null;dispatch({type:"SETTINGS"});}}},[]);
+  const onTE=useCallback(()=>{twoStart.current=null;},[]);
 
   return(
-    <div
-      style={{position:"fixed",inset:0,background:"#000",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none",touchAction:"pan-y"}}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      {/* Volume direction flash overlay */}
-      <AnimatePresence>
-        {flash&&(
-          <motion.div key={flash+Date.now()}
-            initial={{opacity:0.7}} animate={{opacity:0}} transition={{duration:0.3}}
-            style={{
-              position:"fixed",inset:0,zIndex:9999,pointerEvents:"none",
-              background:flash==="up"
-                ?"linear-gradient(to bottom, rgba(0,200,100,0.4) 0%, transparent 60%)"
-                :"linear-gradient(to top, rgba(255,80,80,0.4) 0%, transparent 60%)",
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Tap to activate audio — only shows once */}
-      {!audioReady&&(
-        <div onClick={activateAudio}
-          style={{position:"fixed",inset:0,zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",background:"#000",cursor:"pointer"}}
-        >
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:48,marginBottom:16}}>🫳</div>
-            <div style={{color:"#fff",fontSize:18,fontFamily:"system-ui",fontWeight:600,letterSpacing:1}}>Tap to activate</div>
-            <div style={{color:"#555",fontSize:13,fontFamily:"system-ui",marginTop:8}}>Required to enable volume buttons</div>
-          </div>
-        </div>
-      )}
-
+    <div style={{position:"fixed",inset:0,background:"#000",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none"}} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}>
+      <AnimatePresence>{flash&&(<motion.div key={flash+Math.random()} initial={{opacity:0.8}} animate={{opacity:0}} transition={{duration:0.35}} style={{position:"fixed",inset:0,zIndex:9999,pointerEvents:"none",background:flash==="up"?"linear-gradient(to bottom,rgba(0,220,100,0.5),transparent 50%)":"linear-gradient(to top,rgba(255,60,60,0.5),transparent 50%)"}}/>)}</AnimatePresence>
+      {!activated&&(<div onClick={handleActivate} style={{position:"fixed",inset:0,zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#000",cursor:"pointer",gap:16}}>
+        <motion.div animate={{scale:[1,1.1,1]}} transition={{duration:2,repeat:Infinity}}><div style={{fontSize:60}}>🎩</div></motion.div>
+        <div style={{color:"#fff",fontSize:22,fontFamily:"system-ui",fontWeight:700,letterSpacing:2}}>MindCall</div>
+        <div style={{color:"#333",fontSize:13,fontFamily:"system-ui",marginTop:4}}>Tap to activate</div>
+        <div style={{color:"#1a1a1a",fontSize:11,fontFamily:"monospace",marginTop:8}}>Required for iOS volume button support</div>
+      </div>)}
       <AnimatePresence mode="wait">
-        {st.screen==="idle"&&<IdleScreen key="idle" code={st.code} pool={st.pool} cat={st.cat} len={st.len}/>}
-        {st.screen==="question"&&<QuestionScreen key="q" letter={st.letter} pool={st.pool} kept={st.kept}/>}
+        {st.screen==="idle"&&<IdleScreen key="idle" code={st.code} cat={st.cat} len={st.len} onDir={handleDir} onList={()=>dispatch({type:"LIST"})}/>}
+        {st.screen==="question"&&<QuestionScreen key="q" letter={st.letter} pool={st.pool} kept={st.kept} onDir={handleDir}/>}
         {st.screen==="countdown"&&<CountdownScreen key="cd" word={st.word} secs={cdSecs}/>}
         {st.screen==="pick"&&<PickScreen key="pick" words={st.pool} onPick={w=>dispatch({type:"PICK",w})}/>}
-        {st.screen==="reveal"&&<CallScreen key="call" word={st.word} time={callTime} wall={st.wall} fontSize={st.fontSize} onDecline={()=>dispatch({type:"RESET"})} onAccept={()=>setTimeout(()=>dispatch({type:"RESET"}),1000)}/>}
-        {st.screen==="settings"&&<SettingsScreen key="settings" st={st} dispatch={dispatch}/>}
-        {st.screen==="list"&&<ListScreen key="list" st={st} dispatch={dispatch}/>}
+        {st.screen==="reveal"&&<CallScreen key="call" word={st.word} time={callTime} wall={st.wall} fontSize={st.fontSize} onDecline={()=>dispatch({type:"RESET"})} onAccept={()=>setTimeout(()=>dispatch({type:"RESET"}),800)}/>}
+        {st.screen==="settings"&&<SettingsScreen key="s" st={st} dispatch={dispatch}/>}
+        {st.screen==="list"&&<ListScreen key="l" st={st} dispatch={dispatch}/>}
       </AnimatePresence>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// IDLE SCREEN — shows code being entered
-// ─────────────────────────────────────────────
-function IdleScreen({code,pool,cat,len}){
-  const hint=code.length>0
-    ? `${code.length} digit${code.length>1?"s":""} entered`
-    : "Vol ↑ = 1 · Vol ↑↓ = 2 · Vol ↓ = 3 · ↑↑ = confirm";
-
-  return(
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      style={{position:"fixed",inset:0,background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0}}
-    >
-      {/* Code display */}
-      <div style={{display:"flex",gap:12,marginBottom:32,minHeight:60,alignItems:"center"}}>
-        {code.length===0?(
-          <div style={{color:"#1a1a1a",fontSize:14,fontFamily:"monospace",letterSpacing:3,textTransform:"uppercase"}}>
-            ready
-          </div>
-        ):(
-          [...code].map((d,i)=>(
-            <motion.div key={i}
-              initial={{scale:0,opacity:0}}
-              animate={{scale:1,opacity:1}}
-              transition={{type:"spring",stiffness:500,damping:25}}
-              style={{
-                width:44,height:44,borderRadius:10,
-                background:d==="1"?"#1a3a2a":d==="2"?"#1a2a3a":"#3a1a1a",
-                border:`1px solid ${d==="1"?"#00ff88":d==="2"?"#00aaff":"#ff4444"}`,
-                display:"flex",alignItems:"center",justifyContent:"center",
-                color:d==="1"?"#00ff88":d==="2"?"#00aaff":"#ff4444",
-                fontSize:22,fontWeight:900,fontFamily:"monospace",
-              }}
-            >{d}</motion.div>
-          ))
-        )}
-      </div>
-
-      {/* Hint text */}
-      <div style={{color:"#282828",fontSize:11,fontFamily:"monospace",letterSpacing:2,textAlign:"center",padding:"0 32px",lineHeight:2}}>
-        {hint}
-      </div>
-
-      {/* Category badge */}
-      <div style={{position:"absolute",bottom:60,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-        <div style={{color:"#1a1a1a",fontSize:10,fontFamily:"monospace",letterSpacing:3,textTransform:"uppercase"}}>
-          {CATEGORY_LABELS[cat]||cat} · {len==="any"?"any length":len+" letters"}
-        </div>
-        <div style={{color:"#111",fontSize:10,fontFamily:"monospace",letterSpacing:2}}>
-          swipe down with 2 fingers → settings
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// QUESTION SCREEN — shows letter + candidate list
-// ─────────────────────────────────────────────
-function QuestionScreen({letter,pool,kept}){
-  return(
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      style={{position:"fixed",inset:0,background:"#050505",display:"flex",flexDirection:"column",alignItems:"center",padding:"40px 20px 20px"}}
-    >
-      {/* Kept letters row */}
-      {kept.length>0&&(
-        <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap",justifyContent:"center"}}>
-          {kept.map((k,i)=>(
-            <div key={i} style={{
-              background:"#0a2a0a",border:"1px solid #00ff88",borderRadius:6,
-              color:"#00ff88",fontSize:13,fontWeight:700,fontFamily:"monospace",
-              padding:"3px 10px",letterSpacing:2,
-            }}>✓ {k}</div>
-          ))}
-        </div>
-      )}
-
-      {/* Big letter */}
-      <motion.div
-        key={letter}
-        initial={{scale:0.6,opacity:0,y:20}}
-        animate={{scale:1,opacity:1,y:0}}
-        transition={{type:"spring",stiffness:400,damping:22}}
-        style={{
-          color:"#fff",fontSize:180,fontWeight:900,fontFamily:"'Georgia',serif",
-          lineHeight:1,textShadow:"0 0 60px rgba(255,255,255,0.08)",
-        }}
-      >{letter}</motion.div>
-
-      {/* Ask label */}
-      <div style={{color:"#333",fontSize:11,fontFamily:"monospace",letterSpacing:4,marginTop:4,textTransform:"uppercase"}}>
-        in your word?
-      </div>
-
-      {/* YES/NO instructions */}
-      <div style={{display:"flex",gap:20,marginTop:20}}>
-        <div style={{
-          background:"#0a200a",border:"1px solid #00aa44",borderRadius:10,
-          padding:"8px 24px",color:"#00ff88",fontSize:12,fontWeight:700,
-          fontFamily:"monospace",letterSpacing:3,
-        }}>Vol ↑ = YES</div>
-        <div style={{
-          background:"#200a0a",border:"1px solid #aa2200",borderRadius:10,
-          padding:"8px 24px",color:"#ff4444",fontSize:12,fontWeight:700,
-          fontFamily:"monospace",letterSpacing:3,
-        }}>Vol ↓ = NO</div>
-      </div>
-
-      {/* Candidate words */}
-      {pool.length<=12&&pool.length>0&&(
-        <div style={{marginTop:24,width:"100%",maxWidth:360}}>
-          <div style={{color:"#1a1a1a",fontSize:9,fontFamily:"monospace",letterSpacing:3,textAlign:"center",marginBottom:10}}>
-            {pool.length} CANDIDATE{pool.length>1?"S":""}
-          </div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
-            {pool.map((w,i)=>(
-              <div key={i} style={{
-                color:"#2a2a2a",fontSize:11,fontFamily:"monospace",
-                background:"#0d0d0d",borderRadius:4,padding:"3px 8px",
-                border:"1px solid #1a1a1a",letterSpacing:1,textTransform:"uppercase",
-              }}>{w}</div>
-            ))}
-          </div>
-        </div>
-      )}
-      {pool.length>12&&(
-        <div style={{color:"#1a1a1a",fontSize:10,fontFamily:"monospace",marginTop:20,letterSpacing:2}}>
-          {pool.length} candidates
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// COUNTDOWN SCREEN
-// ─────────────────────────────────────────────
-function CountdownScreen({word,secs}){
-  return(
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      style={{position:"fixed",inset:0,background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}
-    >
-      <div style={{color:"#111",fontSize:12,fontFamily:"monospace",letterSpacing:4,textTransform:"uppercase"}}>
-        call incoming in
-      </div>
-      <motion.div
-        key={secs}
-        initial={{scale:1.4,opacity:0}}
-        animate={{scale:1,opacity:1}}
-        style={{color:"#222",fontSize:72,fontWeight:900,fontFamily:"monospace",lineHeight:1}}
-      >{secs}</motion.div>
-      <div style={{color:"#0d0d0d",fontSize:10,fontFamily:"monospace",letterSpacing:4,marginTop:8,textTransform:"uppercase"}}>
-        word: {word}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// PICK SCREEN — multiple words remain
-// ─────────────────────────────────────────────
-function PickScreen({words,onPick}){
-  return(
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      style={{position:"fixed",inset:0,background:"#080808",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,padding:28}}
-    >
-      <div style={{color:"#333",fontSize:10,fontFamily:"monospace",letterSpacing:4,textTransform:"uppercase",marginBottom:10}}>
-        select word
-      </div>
-      {words.slice(0,8).map((w)=>(
-        <button key={w} onClick={()=>onPick(w)}
-          style={{
-            color:"#fff",fontSize:20,fontWeight:700,fontFamily:"monospace",
-            background:"#111",border:"1px solid #222",borderRadius:12,
-            padding:"12px 28px",cursor:"pointer",width:"100%",
-            textTransform:"uppercase",letterSpacing:5,
-          }}
-        >{w}</button>
+function IdleScreen({code,cat,len,onDir,onList}){
+  return(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+    <div style={{display:"flex",gap:10,marginBottom:28,minHeight:56,alignItems:"center"}}>
+      {code.length===0?<div style={{color:"#1c1c1c",fontSize:13,fontFamily:"monospace",letterSpacing:4}}>READY</div>:[...code].map((d,i)=>(
+        <motion.div key={i} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:500,damping:22}}
+          style={{width:46,height:46,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,fontFamily:"monospace",background:d==="1"?"#0a2a14":d==="2"?"#0a1a2a":"#2a0a0a",border:`1.5px solid ${d==="1"?"#00e676":d==="2"?"#29b6f6":"#ef5350"}`,color:d==="1"?"#00e676":d==="2"?"#29b6f6":"#ef5350"}}
+        >{d}</motion.div>
       ))}
-    </motion.div>
-  );
-}
+    </div>
+    <div style={{display:"flex",gap:16,marginBottom:20}}>
+      <VBtn label="VOL ↑" sub="1 · Confirm" c="#00e676" bg="#0a2a14" onClick={()=>onDir("up")}/>
+      <VBtn label="VOL ↓" sub="3" c="#ef5350" bg="#2a0a0a" onClick={()=>onDir("down")}/>
+    </div>
+    <div style={{color:"#1a1a1a",fontSize:10,fontFamily:"monospace",letterSpacing:2,marginBottom:28,textAlign:"center"}}>↑ then ↓ within 800ms = 2 &nbsp;·&nbsp; ↑↑ = CONFIRM</div>
+    <button onClick={onList} style={{background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:20,padding:"7px 20px",color:"#2a2a2a",fontSize:11,fontFamily:"monospace",letterSpacing:2,cursor:"pointer",textTransform:"uppercase"}}>
+      {CAT_LABELS[cat]} · {len==="any"?"any":len}
+    </button>
+    <div style={{position:"absolute",bottom:44,color:"#111",fontSize:10,fontFamily:"monospace",letterSpacing:2}}>2-FINGER SWIPE ↓ FOR SETTINGS</div>
+  </motion.div>);}
 
-// ─────────────────────────────────────────────
-// CALL SCREEN — fake iOS incoming call
-// ─────────────────────────────────────────────
+function VBtn({label,sub,c,bg,onClick}){return(<button onClick={onClick} style={{background:bg,border:`1.5px solid ${c}`,borderRadius:12,padding:"12px 20px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:92,WebkitTapHighlightColor:"transparent"}}><span style={{color:c,fontSize:14,fontWeight:700,fontFamily:"monospace",letterSpacing:1}}>{label}</span><span style={{color:c+"88",fontSize:9,fontFamily:"monospace",letterSpacing:2}}>{sub}</span></button>);}
+
+function QuestionScreen({letter,pool,kept,onDir}){
+  return(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,background:"#030303",display:"flex",flexDirection:"column",alignItems:"center",padding:"36px 20px 20px"}}>
+    {kept.length>0&&(<div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",justifyContent:"center"}}>{kept.map((k,i)=>(<div key={i} style={{background:"#0a2a14",border:"1px solid #00e676",borderRadius:6,color:"#00e676",fontSize:12,fontWeight:700,fontFamily:"monospace",padding:"3px 10px",letterSpacing:2}}>✓ {k}</div>))}</div>)}
+    <motion.div key={letter} initial={{scale:0.5,opacity:0,y:30}} animate={{scale:1,opacity:1,y:0}} transition={{type:"spring",stiffness:380,damping:22}} style={{color:"#fff",fontSize:170,fontWeight:900,fontFamily:"Georgia,serif",lineHeight:1}}>{letter}</motion.div>
+    <div style={{color:"#252525",fontSize:11,fontFamily:"monospace",letterSpacing:4,marginTop:4}}>IN YOUR WORD?</div>
+    <div style={{display:"flex",gap:14,marginTop:18,width:"100%",maxWidth:320}}>
+      <button onClick={()=>onDir("up")} style={{flex:1,padding:"16px 0",background:"#0a2a14",border:"2px solid #00e676",borderRadius:14,color:"#00e676",fontSize:16,fontWeight:900,fontFamily:"monospace",letterSpacing:3,cursor:"pointer",WebkitTapHighlightColor:"transparent"}}>YES<br/><span style={{fontSize:9,opacity:0.5}}>VOL ↑</span></button>
+      <button onClick={()=>onDir("down")} style={{flex:1,padding:"16px 0",background:"#2a0a0a",border:"2px solid #ef5350",borderRadius:14,color:"#ef5350",fontSize:16,fontWeight:900,fontFamily:"monospace",letterSpacing:3,cursor:"pointer",WebkitTapHighlightColor:"transparent"}}>NO<br/><span style={{fontSize:9,opacity:0.5}}>VOL ↓</span></button>
+    </div>
+    {pool.length<=12&&pool.length>0&&(<div style={{marginTop:18,width:"100%",maxWidth:360}}><div style={{color:"#161616",fontSize:9,fontFamily:"monospace",letterSpacing:3,textAlign:"center",marginBottom:8}}>{pool.length} CANDIDATES</div><div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>{pool.map((w,i)=>(<div key={i} style={{color:"#222",fontSize:10,fontFamily:"monospace",background:"#0d0d0d",borderRadius:4,padding:"3px 8px",border:"1px solid #181818",letterSpacing:1,textTransform:"uppercase"}}>{w}</div>))}</div></div>)}
+    {pool.length>12&&<div style={{color:"#1a1a1a",fontSize:10,fontFamily:"monospace",marginTop:16,letterSpacing:2}}>{pool.length} CANDIDATES</div>}
+  </motion.div>);}
+
+function CountdownScreen({word,secs}){return(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12}}><div style={{color:"#111",fontSize:11,fontFamily:"monospace",letterSpacing:4}}>CALL IN</div><motion.div key={secs} initial={{scale:1.4,opacity:0}} animate={{scale:1,opacity:1}} style={{color:"#1e1e1e",fontSize:88,fontWeight:900,fontFamily:"monospace",lineHeight:1}}>{secs}</motion.div><div style={{color:"#0d0d0d",fontSize:11,fontFamily:"monospace",letterSpacing:4,marginTop:8,textTransform:"uppercase"}}>{word}</div></motion.div>);}
+
+function PickScreen({words,onPick}){return(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,background:"#080808",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,padding:28}}><div style={{color:"#2a2a2a",fontSize:10,fontFamily:"monospace",letterSpacing:4,marginBottom:8}}>SELECT WORD</div>{words.slice(0,8).map(w=>(<button key={w} onClick={()=>onPick(w)} style={{color:"#fff",fontSize:18,fontWeight:700,fontFamily:"monospace",background:"#111",border:"1px solid #1e1e1e",borderRadius:12,padding:"12px 0",cursor:"pointer",width:"100%",textTransform:"uppercase",letterSpacing:5,WebkitTapHighlightColor:"transparent"}}>{w}</button>))}</motion.div>);}
+
 function CallScreen({word,time,wall,fontSize,onDecline,onAccept}){
   const fz={small:26,medium:36,large:50}[fontSize]||36;
-  const bg=wall==="gradient1"
-    ?"linear-gradient(180deg,#0f0c29 0%,#302b63 50%,#24243e 100%)"
-    :wall==="gradient2"
-    ?"linear-gradient(180deg,#1a0000 0%,#2d1515 50%,#1a0000 100%)"
-    :wall==="gradient3"
-    ?"linear-gradient(180deg,#001a00 0%,#0a2e0a 50%,#001a00 100%)"
-    :"#1C1C1E";
+  const bg=wall==="gradient1"?"linear-gradient(180deg,#0f0c29,#302b63 50%,#24243e)":wall==="gradient2"?"linear-gradient(180deg,#1a0000,#2d1515 50%,#1a0000)":wall==="gradient3"?"linear-gradient(180deg,#001a00,#0a2e0a 50%,#001a00)":"#1C1C1E";
+  return(<motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:280,damping:28}} style={{position:"fixed",inset:0,background:bg,display:"flex",flexDirection:"column",alignItems:"center"}}>
+    <div style={{width:"100%",display:"flex",justifyContent:"space-between",padding:"16px 24px 0",alignItems:"center"}}><span style={{color:"#fff",fontSize:17,fontWeight:600,fontFamily:"system-ui"}}>{time}</span><div style={{display:"flex",gap:6,alignItems:"center"}}><svg width="17" height="12" viewBox="0 0 17 12" fill="white"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="0.5"/><rect x="9" y="2.5" width="3" height="9.5" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5"/></svg><svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="white" strokeOpacity="0.35"/><rect x="2" y="2" width="15" height="8" rx="1.5" fill="white"/><path d="M22 4.5v3a1.5 1.5 0 0 0 0-3z" fill="white" fillOpacity="0.4"/></svg></div></div>
+    <motion.div animate={{opacity:[0.5,1,0.5]}} transition={{duration:1.6,repeat:Infinity,ease:"easeInOut"}} style={{color:"#8E8E93",fontSize:14,fontFamily:"system-ui",marginTop:20}}>incoming call</motion.div>
+    <div style={{width:100,height:100,borderRadius:"50%",background:"#3A3A3C",display:"flex",alignItems:"center",justifyContent:"center",marginTop:28}}><svg width="56" height="56" viewBox="0 0 56 56" fill="#8E8E93"><circle cx="28" cy="20" r="12"/><path d="M4 50c0-13.3 10.7-22 24-22s24 8.7 24 22"/></svg></div>
+    <div style={{color:"#fff",fontSize:fz,fontWeight:700,fontFamily:"system-ui",marginTop:18,textAlign:"center",padding:"0 20px"}}>{word}</div>
+    <div style={{color:"#8E8E93",fontSize:15,fontFamily:"system-ui",marginTop:5}}>mobile</div>
+    <div style={{position:"absolute",bottom:"max(env(safe-area-inset-bottom,0px),44px)",width:"100%",display:"flex",justifyContent:"space-around",padding:"0 48px",boxSizing:"border-box"}}>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}><button onClick={onDecline} style={{width:72,height:72,borderRadius:"50%",background:"#FF3B30",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 24px #FF3B3088"}}><svg width="30" height="30" viewBox="0 0 32 32" fill="white"><path d="M3 22C6 15 9 13 16 13C23 13 26 15 29 22L25.5 25.5C23 22 20 21 16 21C12 21 9 22 6.5 25.5Z" transform="rotate(135,16,19)"/></svg></button><span style={{color:"#8E8E93",fontSize:13,fontFamily:"system-ui"}}>Decline</span></div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}><button onClick={onAccept} style={{width:72,height:72,borderRadius:"50%",background:"#34C759",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 24px #34C75988"}}><svg width="30" height="30" viewBox="0 0 32 32" fill="white"><path d="M3 10C6 3 9 1 16 1C23 1 26 3 29 10L25.5 13.5C23 10 20 9 16 9C12 9 9 10 6.5 13.5Z"/></svg></button><span style={{color:"#8E8E93",fontSize:13,fontFamily:"system-ui"}}>Accept</span></div>
+    </div>
+  </motion.div>);}
 
-  return(
-    <motion.div
-      initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
-      transition={{type:"spring",stiffness:280,damping:28}}
-      style={{position:"fixed",inset:0,background:bg,display:"flex",flexDirection:"column",alignItems:"center"}}
-    >
-      {/* Status bar */}
-      <div style={{width:"100%",display:"flex",justifyContent:"space-between",padding:"16px 24px 0",alignItems:"center"}}>
-        <span style={{color:"#fff",fontSize:17,fontWeight:600,fontFamily:"system-ui"}}>{time}</span>
-        <div style={{display:"flex",gap:6,alignItems:"center"}}>
-          <svg width="17" height="12" viewBox="0 0 17 12" fill="white">
-            <rect x="0" y="8" width="3" height="4" rx="0.5"/>
-            <rect x="4.5" y="5.5" width="3" height="6.5" rx="0.5"/>
-            <rect x="9" y="2.5" width="3" height="9.5" rx="0.5"/>
-            <rect x="13.5" y="0" width="3" height="12" rx="0.5"/>
-          </svg>
-          <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
-            <rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="white" strokeOpacity="0.35"/>
-            <rect x="2" y="2" width="15" height="8" rx="1.5" fill="white"/>
-            <path d="M22 4.5v3a1.5 1.5 0 0 0 0-3z" fill="white" fillOpacity="0.4"/>
-          </svg>
-        </div>
-      </div>
-
-      {/* Incoming label */}
-      <motion.div
-        animate={{opacity:[0.5,1,0.5]}}
-        transition={{duration:1.6,repeat:Infinity,ease:"easeInOut"}}
-        style={{color:"#8E8E93",fontSize:14,fontFamily:"system-ui",marginTop:20,letterSpacing:0.2}}
-      >incoming call</motion.div>
-
-      {/* Avatar */}
-      <div style={{width:100,height:100,borderRadius:"50%",background:"#3A3A3C",display:"flex",alignItems:"center",justifyContent:"center",marginTop:30}}>
-        <svg width="56" height="56" viewBox="0 0 56 56" fill="#8E8E93">
-          <circle cx="28" cy="20" r="12"/>
-          <path d="M4 50c0-13.3 10.7-22 24-22s24 8.7 24 22"/>
-        </svg>
-      </div>
-
-      {/* Word */}
-      <div style={{color:"#fff",fontSize:fz,fontWeight:700,fontFamily:"system-ui",marginTop:20,letterSpacing:0.5,textAlign:"center",padding:"0 20px"}}>
-        {word}
-      </div>
-      <div style={{color:"#8E8E93",fontSize:15,fontFamily:"system-ui",marginTop:6}}>mobile</div>
-
-      {/* Buttons */}
-      <div style={{position:"absolute",bottom:"max(env(safe-area-inset-bottom,0px),44px)",width:"100%",display:"flex",justifyContent:"space-around",padding:"0 48px",boxSizing:"border-box"}}>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-          <button onClick={onDecline}
-            style={{width:72,height:72,borderRadius:"50%",background:"#FF3B30",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 24px rgba(255,59,48,0.5)"}}
-          >
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="white">
-              <path d="M5 22C8 15 11 13 16 13C21 13 24 15 27 22L23.5 25.5C21.5 22.5 19 21 16 21C13 21 10.5 22.5 8.5 25.5Z" transform="rotate(135,16,18)"/>
-            </svg>
-          </button>
-          <span style={{color:"#8E8E93",fontSize:13,fontFamily:"system-ui"}}>Decline</span>
-        </div>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-          <button onClick={onAccept}
-            style={{width:72,height:72,borderRadius:"50%",background:"#34C759",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 24px rgba(52,199,89,0.5)"}}
-          >
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="white">
-              <path d="M5 10C8 3 11 1 16 1C21 1 24 3 27 10L23.5 13.5C21.5 10.5 19 9 16 9C13 9 10.5 10.5 8.5 13.5Z"/>
-            </svg>
-          </button>
-          <span style={{color:"#8E8E93",fontSize:13,fontFamily:"system-ui"}}>Accept</span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// SETTINGS SCREEN
-// ─────────────────────────────────────────────
 function SettingsScreen({st,dispatch}){
-  const set=(k,v)=>dispatch({type:"SET",k,v});
-  const cats=Object.keys(CATEGORY_LABELS);
+  const set=(k,v)=>dispatch({type:"SET",k,v}),cats=Object.keys(CAT_LABELS);
+  return(<motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{position:"fixed",inset:0,background:"#1C1C1E",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+    <div style={{padding:"56px 16px 80px",maxWidth:480,margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28}}><h1 style={{color:"#fff",fontSize:28,fontWeight:700,fontFamily:"system-ui",margin:0}}>Settings</h1><button onClick={()=>dispatch({type:"BACK"})} style={{color:"#fff",background:"#3A3A3C",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button></div>
+      <Sect label="CATEGORY">{cats.map((c,i)=>(<SRow key={c} label={CAT_LABELS[c]} sub={`${POOLS[c].length} words`} active={st.cat===c} onClick={()=>set("cat",c)} last={i===cats.length-1}/>))}</Sect>
+      <Sect label="WORD LENGTH"><div style={{display:"flex",gap:8,padding:"12px 0"}}>{[["any","Any"],["3-5","3–5"],["5-7","5–7"],["6-8","6–8"]].map(([v,l])=>(<button key={v} onClick={()=>set("len",v)} style={{flex:1,padding:"10px 4px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontFamily:"system-ui",fontWeight:600,background:st.len===v?"#0A84FF":"#3A3A3C",color:"#fff"}}>{l}</button>))}</div></Sect>
+      <Sect label="CALL">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #2C2C2E"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Delay</span><div style={{display:"flex",alignItems:"center",gap:12}}><Tb label="−" onClick={()=>set("delay",Math.max(1,st.delay-1))}/><span style={{color:"#0A84FF",fontFamily:"system-ui",fontWeight:700,minWidth:44,textAlign:"center"}}>{st.delay}s</span><Tb label="+" onClick={()=>set("delay",Math.min(30,st.delay+1))}/></div></div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #2C2C2E"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Name size</span><div style={{display:"flex",gap:8}}>{["small","medium","large"].map(s=>(<button key={s} onClick={()=>set("fontSize",s)} style={{padding:"6px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",background:st.fontSize===s?"#0A84FF":"#3A3A3C",color:"#fff",textTransform:"capitalize"}}>{s}</button>))}</div></div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Wallpaper</span><div style={{display:"flex",gap:8}}>{[["dark","#1C1C1E"],["gradient1","linear-gradient(#0f0c29,#24243e)"],["gradient2","linear-gradient(#1a0000,#2d1515)"],["gradient3","linear-gradient(#001a00,#0a2e0a)"]].map(([v,bg])=>(<button key={v} onClick={()=>set("wall",v)} style={{width:32,height:32,borderRadius:8,border:st.wall===v?"2px solid #0A84FF":"2px solid #444",cursor:"pointer",background:bg}}/>))}</div></div>
+      </Sect>
+      <Sect label="VIBRATION">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #2C2C2E"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Pulse</span><div style={{display:"flex",gap:8}}>{[80,120,160].map(d=>(<button key={d} onClick={()=>set("pulse",d)} style={{padding:"6px 8px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",background:st.pulse===d?"#0A84FF":"#3A3A3C",color:"#fff"}}>{d}ms</button>))}</div></div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Pause</span><div style={{display:"flex",gap:8}}>{[400,500,700].map(d=>(<button key={d} onClick={()=>set("pause",d)} style={{padding:"6px 8px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",background:st.pause===d?"#0A84FF":"#3A3A3C",color:"#fff"}}>{d}ms</button>))}</div></div>
+      </Sect>
+      <div style={{color:"#2a2a2a",fontSize:12,fontFamily:"system-ui",textAlign:"center",marginTop:20}}>MindCall v3.0</div>
+    </div>
+  </motion.div>);}
 
-  return(
-    <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
-      transition={{type:"spring",stiffness:300,damping:30}}
-      style={{position:"fixed",inset:0,background:"#1C1C1E",overflowY:"auto",WebkitOverflowScrolling:"touch"}}
-    >
-      <div style={{padding:"56px 16px 80px",maxWidth:480,margin:"0 auto"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28}}>
-          <h1 style={{color:"#fff",fontSize:28,fontWeight:700,fontFamily:"system-ui",margin:0}}>Settings</h1>
-          <button onClick={()=>dispatch({type:"BACK"})}
-            style={{color:"#fff",background:"#3A3A3C",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}
-          >×</button>
-        </div>
-
-        <Sect label="WORD CATEGORY">
-          {cats.map(c=>(
-            <SRow key={c} label={CATEGORY_LABELS[c]} sub={`${WORDS[c].length} words`} active={st.cat===c} onClick={()=>set("cat",c)} last={c===cats[cats.length-1]}/>
-          ))}
-        </Sect>
-
-        <Sect label="WORD LENGTH">
-          <div style={{display:"flex",gap:8,padding:"12px 0"}}>
-            {[["any","Any"],["3-5","3–5"],["5-7","5–7"],["6-8","6–8"]].map(([v,l])=>(
-              <button key={v} onClick={()=>set("len",v)}
-                style={{flex:1,padding:"10px 4px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontFamily:"system-ui",fontWeight:600,background:st.len===v?"#0A84FF":"#3A3A3C",color:"#fff"}}
-              >{l}</button>
-            ))}
-          </div>
-        </Sect>
-
-        <Sect label="CALL SETTINGS">
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #2C2C2E"}}>
-            <span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Call delay</span>
-            <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <TinyBtn label="−" onClick={()=>set("delay",Math.max(1,st.delay-1))}/>
-              <span style={{color:"#0A84FF",fontFamily:"system-ui",fontWeight:700,minWidth:48,textAlign:"center",fontSize:16}}>{st.delay}s</span>
-              <TinyBtn label="+" onClick={()=>set("delay",Math.min(30,st.delay+1))}/>
-            </div>
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #2C2C2E"}}>
-            <span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Caller name size</span>
-            <div style={{display:"flex",gap:8}}>
-              {["small","medium","large"].map(s=>(
-                <button key={s} onClick={()=>set("fontSize",s)}
-                  style={{padding:"6px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",background:st.fontSize===s?"#0A84FF":"#3A3A3C",color:"#fff",textTransform:"capitalize"}}
-                >{s}</button>
-              ))}
-            </div>
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0"}}>
-            <span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Wallpaper</span>
-            <div style={{display:"flex",gap:8}}>
-              {[["dark","#1C1C1E"],["gradient1","linear-gradient(#0f0c29,#24243e)"],["gradient2","linear-gradient(#1a0000,#2d1515)"],["gradient3","linear-gradient(#001a00,#0a2e0a)"]].map(([v,bg])=>(
-                <button key={v} onClick={()=>set("wall",v)}
-                  style={{width:32,height:32,borderRadius:8,border:st.wall===v?"2px solid #0A84FF":"2px solid #444",cursor:"pointer",background:bg}}
-                />
-              ))}
-            </div>
-          </div>
-        </Sect>
-
-        <Sect label="VIBRATION">
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #2C2C2E"}}>
-            <span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Pulse duration</span>
-            <div style={{display:"flex",gap:8}}>
-              {[80,120,160].map(d=>(
-                <button key={d} onClick={()=>set("pulse",d)}
-                  style={{padding:"6px 8px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",background:st.pulse===d?"#0A84FF":"#3A3A3C",color:"#fff"}}
-                >{d}ms</button>
-              ))}
-            </div>
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0"}}>
-            <span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>Group pause</span>
-            <div style={{display:"flex",gap:8}}>
-              {[400,500,700].map(d=>(
-                <button key={d} onClick={()=>set("pause",d)}
-                  style={{padding:"6px 8px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",background:st.pause===d?"#0A84FF":"#3A3A3C",color:"#fff"}}
-                >{d}ms</button>
-              ))}
-            </div>
-          </div>
-        </Sect>
-
-        <div style={{color:"#2a2a2a",fontSize:12,fontFamily:"system-ui",textAlign:"center",marginTop:24}}>
-          MindCall v2.0
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// LIST QUICK-SELECT
-// ─────────────────────────────────────────────
 function ListScreen({st,dispatch}){
   const set=(k,v)=>dispatch({type:"SET",k,v});
-  const cats=Object.keys(CATEGORY_LABELS);
-  return(
-    <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}}
-      transition={{type:"spring",stiffness:400,damping:35}}
-      style={{position:"fixed",bottom:0,left:0,right:0,background:"#2C2C2E",borderRadius:"20px 20px 0 0",padding:"16px 16px 48px",maxHeight:"75vh",overflowY:"auto"}}
-    >
-      <div style={{width:36,height:4,background:"#555",borderRadius:2,margin:"0 auto 18px"}}/>
-      <h2 style={{color:"#fff",fontFamily:"system-ui",fontSize:17,fontWeight:700,marginBottom:16}}>Select List</h2>
-      <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:20}}>
-        {cats.map(c=>(
-          <button key={c} onClick={()=>set("cat",c)}
-            style={{padding:"8px 14px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontFamily:"system-ui",background:st.cat===c?"#0A84FF":"#3A3A3C",color:"#fff",fontWeight:st.cat===c?700:400}}
-          >{CATEGORY_LABELS[c]}</button>
-        ))}
-      </div>
-      <div style={{display:"flex",gap:8,marginBottom:16}}>
-        {[["any","Any"],["3-5","3–5"],["5-7","5–7"],["6-8","6–8"]].map(([v,l])=>(
-          <button key={v} onClick={()=>set("len",v)}
-            style={{flex:1,padding:"10px 4px",borderRadius:10,border:"none",cursor:"pointer",fontSize:12,fontFamily:"system-ui",fontWeight:600,background:st.len===v?"#0A84FF":"#3A3A3C",color:"#fff"}}
-          >{l}</button>
-        ))}
-      </div>
-      <button onClick={()=>dispatch({type:"BACK"})}
-        style={{width:"100%",padding:14,borderRadius:12,border:"none",background:"#3A3A3C",color:"#fff",fontFamily:"system-ui",fontSize:15,cursor:"pointer",fontWeight:600}}
-      >Done</button>
-    </motion.div>
-  );
-}
+  return(<motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:400,damping:35}} style={{position:"fixed",bottom:0,left:0,right:0,background:"#2C2C2E",borderRadius:"20px 20px 0 0",padding:"16px 16px 48px",maxHeight:"75vh",overflowY:"auto"}}>
+    <div style={{width:36,height:4,background:"#555",borderRadius:2,margin:"0 auto 16px"}}/>
+    <h2 style={{color:"#fff",fontFamily:"system-ui",fontSize:17,fontWeight:700,marginBottom:14}}>Select List</h2>
+    <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:18}}>{Object.keys(CAT_LABELS).map(c=>(<button key={c} onClick={()=>set("cat",c)} style={{padding:"8px 14px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontFamily:"system-ui",background:st.cat===c?"#0A84FF":"#3A3A3C",color:"#fff",fontWeight:st.cat===c?700:400}}>{CAT_LABELS[c]}</button>))}</div>
+    <div style={{display:"flex",gap:8,marginBottom:16}}>{[["any","Any"],["3-5","3–5"],["5-7","5–7"],["6-8","6–8"]].map(([v,l])=>(<button key={v} onClick={()=>set("len",v)} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"none",cursor:"pointer",fontSize:12,fontFamily:"system-ui",fontWeight:600,background:st.len===v?"#0A84FF":"#3A3A3C",color:"#fff"}}>{l}</button>))}</div>
+    <button onClick={()=>dispatch({type:"BACK"})} style={{width:"100%",padding:14,borderRadius:12,border:"none",background:"#3A3A3C",color:"#fff",fontFamily:"system-ui",fontSize:15,cursor:"pointer",fontWeight:600}}>Done</button>
+  </motion.div>);}
 
-// ─────────────────────────────────────────────
-// UI HELPERS
-// ─────────────────────────────────────────────
-function Sect({label,children}){
-  return(
-    <div style={{marginBottom:24}}>
-      <div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",letterSpacing:0.8,marginBottom:8,textTransform:"uppercase",paddingLeft:4}}>{label}</div>
-      <div style={{background:"#2C2C2E",borderRadius:12,padding:"0 16px"}}>{children}</div>
-    </div>
-  );
-}
-
-function SRow({label,sub,active,onClick,last}){
-  return(
-    <button onClick={onClick}
-      style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"14px 0",background:"none",border:"none",borderBottom:last?"none":"1px solid #3A3A3C",cursor:"pointer",textAlign:"left"}}
-    >
-      <span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>{label}</span>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <span style={{color:"#555",fontSize:12,fontFamily:"system-ui"}}>{sub}</span>
-        {active&&<span style={{color:"#34C759",fontSize:18}}>✓</span>}
-      </div>
-    </button>
-  );
-}
-
-function TinyBtn({label,onClick}){
-  return(
-    <button onClick={onClick}
-      style={{color:"#fff",background:"#3A3A3C",border:"none",borderRadius:7,width:32,height:32,cursor:"pointer",fontSize:18,fontFamily:"system-ui",display:"flex",alignItems:"center",justifyContent:"center"}}
-    >{label}</button>
-  );
-}
+function Sect({label,children}){return(<div style={{marginBottom:24}}><div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",letterSpacing:0.8,marginBottom:8,textTransform:"uppercase",paddingLeft:4}}>{label}</div><div style={{background:"#2C2C2E",borderRadius:12,padding:"0 16px"}}>{children}</div></div>);}
+function SRow({label,sub,active,onClick,last}){return(<button onClick={onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"14px 0",background:"none",border:"none",borderBottom:last?"none":"1px solid #3A3A3C",cursor:"pointer",textAlign:"left"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>{label}</span><div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"#555",fontSize:12,fontFamily:"system-ui"}}>{sub}</span>{active&&<span style={{color:"#34C759",fontSize:18}}>✓</span>}</div></button>);}
+function Tb({label,onClick}){return(<button onClick={onClick} style={{color:"#fff",background:"#3A3A3C",border:"none",borderRadius:7,width:32,height:32,cursor:"pointer",fontSize:18,fontFamily:"system-ui",display:"flex",alignItems:"center",justifyContent:"center"}}>{label}</button>);}
