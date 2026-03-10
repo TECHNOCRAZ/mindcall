@@ -220,7 +220,8 @@ export default function App(){
   const cdRef=useRef(null);
   const ringStopRef=useRef(null);
   const codeTimer=useRef(null);
-  const ppLast=useRef(0); // play/pause last press time (bluetooth double-press)
+  const prevLast=useRef(0); // previoustrack last press time
+  const nextLast=useRef(0); // nexttrack last press time
 
   const doFlash=useCallback(dir=>{setFlash(dir);setTimeout(()=>setFlash(null),400);if(navigator.vibrate)navigator.vibrate(30);},[]);
 
@@ -267,39 +268,43 @@ export default function App(){
     if(!navigator.mediaSession)return;
     navigator.mediaSession.metadata=new MediaMetadata({title:"MindCall",artist:"Performer"});
     navigator.mediaSession.setActionHandler("previoustrack",()=>{
-      const s=stRef.current;
-      if(s.screen==="idle")handleInput("1");
-      else if(s.screen==="question")handleInput("yes");
+      const now=Date.now(),s=stRef.current;
+      if(s.screen==="idle"){
+        if(now-prevLast.current<600){handleInput("confirm");prevLast.current=0;}
+        else{handleInput("1");prevLast.current=now;}
+      } else if(s.screen==="question") handleInput("yes");
     });
     navigator.mediaSession.setActionHandler("nexttrack",()=>{
-      const s=stRef.current;
-      if(s.screen==="idle")handleInput("3");
-      else if(s.screen==="question")handleInput("no");
+      const now=Date.now(),s=stRef.current;
+      if(s.screen==="idle"){
+        if(now-nextLast.current<600){handleInput("confirm");nextLast.current=0;}
+        else{handleInput("3");nextLast.current=now;}
+      } else if(s.screen==="question") handleInput("no");
     });
     navigator.mediaSession.setActionHandler("play",()=>{
-      const now=Date.now();
       const s=stRef.current;
-      if(s.screen==="idle"){
-        if(now-ppLast.current<600){handleInput("confirm");ppLast.current=0;}
-        else{handleInput("2");ppLast.current=now;}
-      }
+      if(s.screen==="idle") handleInput("2");
     });
     navigator.mediaSession.setActionHandler("pause",()=>{
-      const now=Date.now();
       const s=stRef.current;
-      if(s.screen==="idle"){
-        if(now-ppLast.current<600){handleInput("confirm");ppLast.current=0;}
-        else{handleInput("2");ppLast.current=now;}
-      }
+      if(s.screen==="idle") handleInput("2");
     });
     // Keyboard fallback
     const onKey=e=>{
-      if(e.key==="MediaTrackPrevious"){e.preventDefault();navigator.mediaSession.actionHandlers?.get?.("previoustrack")||(() => { const s=stRef.current; if(s.screen==="idle")handleInput("1"); else if(s.screen==="question")handleInput("yes"); })();}
-      else if(e.key==="MediaPlayPause"){e.preventDefault();
-        const now=Date.now();const s=stRef.current;
-        if(s.screen==="idle"){if(now-ppLast.current<600){handleInput("confirm");ppLast.current=0;}else{handleInput("2");ppLast.current=now;}}
+      if(e.key==="MediaTrackPrevious"){e.preventDefault();
+        const now=Date.now(),s=stRef.current;
+        if(s.screen==="idle"){if(now-prevLast.current<600){handleInput("confirm");prevLast.current=0;}else{handleInput("1");prevLast.current=now;}}
+        else if(s.screen==="question")handleInput("yes");
       }
-      else if(e.key==="MediaTrackNext"){e.preventDefault();const s=stRef.current;if(s.screen==="idle")handleInput("3");else if(s.screen==="question")handleInput("no");}
+      else if(e.key==="MediaPlayPause"||e.key==="MediaPlay"||e.key==="MediaPause"){e.preventDefault();
+        const s=stRef.current;
+        if(s.screen==="idle") handleInput("2");
+      }
+      else if(e.key==="MediaTrackNext"){e.preventDefault();
+        const now=Date.now(),s=stRef.current;
+        if(s.screen==="idle"){if(now-nextLast.current<600){handleInput("confirm");nextLast.current=0;}else{handleInput("3");nextLast.current=now;}}
+        else if(s.screen==="question")handleInput("no");
+      }
     };
     document.addEventListener("keydown",onKey);
     return()=>{
@@ -455,7 +460,7 @@ function IdleScreen({st,onInput,onSettings}){
       ):(
         <div style={{marginBottom:22,display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
           <div style={{color:"#222",fontSize:11,fontFamily:"monospace",letterSpacing:3,marginBottom:4}}>BLUETOOTH REMOTE</div>
-          {[["⏮","Previous","1 — Straight"],["⏯","Play/Pause","2 — Mixed (×2 = Confirm)"],["⏭","Next","3 — Curves"]].map(([ico,btn,act])=>(
+          {[["⏮","Previous","1 — Straight  (×2 = Confirm)"],["⏯","Play/Pause","2 — Mixed"],["⏭","Next","3 — Curves  (×2 = Confirm)"]].map(([ico,btn,act])=>(
             <div key={btn} style={{display:"flex",gap:14,alignItems:"center",background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"10px 18px",width:240}}>
               <div style={{fontSize:22}}>{ico}</div>
               <div><div style={{color:"#333",fontSize:12,fontFamily:"system-ui",fontWeight:600}}>{btn}</div><div style={{color:"#222",fontSize:10,fontFamily:"monospace",letterSpacing:1}}>{act}</div></div>
@@ -670,7 +675,7 @@ function SettingsScreen({st,dispatch}){
       {st.inputMode==="bluetooth"&&<div style={{padding:"0 16px 20px"}}>
         <div style={{background:"#2C2C2E",borderRadius:12,padding:"12px 14px"}}>
           <div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",marginBottom:8}}>Phase 1 — Code Entry</div>
-          {[["⏮ Previous","= digit 1 (Straight)"],["⏯ Play/Pause","= digit 2 (Mixed)"],["⏯⏯ Double Press","= Confirm"],["⏭ Next","= digit 3 (Curves)"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:12}}>{v}</span></div>)}
+          {[["⏮ Previous","= digit 1 (Straight)"],["⏮⏮ Double Prev","= Confirm"],["⏯ Play/Pause","= digit 2 (Mixed)"],["⏭ Next","= digit 3 (Curves)"],["⏭⏭ Double Next","= Confirm"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:12}}>{v}</span></div>)}
           <div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",marginTop:10,marginBottom:8}}>Phase 2 — YES / NO</div>
           {[["⏮ Previous","= YES"],["⏭ Next","= NO"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:12}}>{v}</span></div>)}
         </div>
