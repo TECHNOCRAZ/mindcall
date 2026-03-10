@@ -35,7 +35,7 @@ function buildVibe(letter,pDur=250,gPause=800){
 }
 function vibeDur(pat){return pat.reduce((a,b)=>a+b,0);}
 
-// Audio beeps
+// Audio beeps (Polybius encoding)
 function polyBeeps(ctx,letter,pDur,gPause){
   if(!ctx||ctx.state==="closed")return;
   const rc=polyRC(letter);if(!rc)return;
@@ -164,8 +164,8 @@ function getPool(cat,len){
 // ═══════════════════════════════════════════════════════
 // SETTINGS
 // ═══════════════════════════════════════════════════════
-const DEF={cat:"all",len:"any",delay:10,pulse:250,pause:800,revealMode:"call",apiUrl:"",apiKey:"",apiKeyName:"key",wall:"dark",fontSize:"medium",inputMode:"swipe"};
-function loadS(){try{return{...DEF,...JSON.parse(localStorage.getItem("mc6")||"{}")}}catch{return{...DEF}}}
+const DEF={cat:"all",len:"any",delay:10,pulse:250,pause:800,revealMode:"call",apiUrl:"",apiKey:"",apiKeyName:"key",wall:"dark",fontSize:"medium",inputMode:"swipe",bgImage:""};
+function loadS(){try{return{...DEF,...JSON.parse(localStorage.getItem("mc6")||"{}"),bgImage:localStorage.getItem("mc6_bg")||""}}catch{return{...DEF}}}
 function saveS(s){try{localStorage.setItem("mc6",JSON.stringify(s))}catch{}}
 
 // ═══════════════════════════════════════════════════════
@@ -209,7 +209,7 @@ function reducer(s,a){
     case"RESET":return{...initSt(),screen:"idle"};
     case"SETTINGS":return{...s,screen:"settings"};
     case"BACK":return{...s,screen:"idle"};
-    case"SET":{const ns={...s,[a.k]:a.v};saveS({cat:ns.cat,len:ns.len,delay:ns.delay,pulse:ns.pulse,pause:ns.pause,revealMode:ns.revealMode,apiUrl:ns.apiUrl,apiKey:ns.apiKey,apiKeyName:ns.apiKeyName,wall:ns.wall,fontSize:ns.fontSize,inputMode:ns.inputMode});return ns;}
+    case"SET":{const ns={...s,[a.k]:a.v};saveS({cat:ns.cat,len:ns.len,delay:ns.delay,pulse:ns.pulse,pause:ns.pause,revealMode:ns.revealMode,apiUrl:ns.apiUrl,apiKey:ns.apiKey,apiKeyName:ns.apiKeyName,wall:ns.wall,fontSize:ns.fontSize,inputMode:ns.inputMode});if(a.k==="bgImage"){try{localStorage.setItem("mc6_bg",a.v);}catch{}}return ns;}
     default:return s;
   }
 }
@@ -475,71 +475,63 @@ function ActivateSplash({onActivate}){
 // IDLE
 // ──────────────────────────────────────────────
 function IdleScreen({st,onInput,onSettings}){
-  const{code,cat,len,inputMode}=st;
+  const{code,cat,len,inputMode,bgImage}=st;
+  const hasCode=code.length>0;
   return(
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-      {/* code display */}
-      <div style={{display:"flex",gap:10,marginBottom:22,minHeight:56,alignItems:"center"}}>
-        {code.length===0
-          ?<div style={{color:"#171717",fontSize:12,fontFamily:"monospace",letterSpacing:5}}>ENTER CODE</div>
-          :[...code].map((d,i)=>{
-            const c=d==="1"?"#00e676":d==="2"?"#ffb300":"#ef5350";
-            const b=d==="1"?"#0b2e16":d==="2"?"#2e2000":"#2e0b0b";
-            return(<motion.div key={i} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:600,damping:22}}
-              style={{width:50,height:50,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:900,fontFamily:"monospace",background:b,border:`2px solid ${c}`,color:c}}>{d}</motion.div>);
-          })}
-      </div>
-      {inputMode==="swipe"?(
-        <>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gridTemplateRows:"1fr 1fr 1fr",gap:6,width:210,height:210,marginBottom:22}}>
-            <div style={{gridColumn:2,gridRow:1}}><SwBtn dir="↑" label="1" sub="Straight" c="#00e676" bg="#0b2e16" onClick={()=>onInput("1")}/></div>
-            <div style={{gridColumn:1,gridRow:2,display:"flex",alignItems:"center",justifyContent:"center"}}><SwBtn dir="←" label="✓" sub="Confirm" c="#29b6f6" bg="#0b1e2e" onClick={()=>onInput("confirm")}/></div>
-            <div style={{gridColumn:2,gridRow:2,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:44,height:44,borderRadius:"50%",border:"1px solid #181818",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:"#181818",fontSize:8,fontFamily:"monospace",letterSpacing:1}}>SWIPE</div></div></div>
-            <div style={{gridColumn:3,gridRow:2,display:"flex",alignItems:"center",justifyContent:"center"}}><SwBtn dir="→" label="2" sub="Mixed" c="#ffb300" bg="#2e2000" onClick={()=>onInput("2")}/></div>
-            <div style={{gridColumn:2,gridRow:3}}><SwBtn dir="↓" label="3" sub="Curves" c="#ef5350" bg="#2e0b0b" onClick={()=>onInput("3")}/></div>
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:5,width:"85%",maxWidth:310,marginBottom:18}}>
-            {[["1","Straight — A E F H I K L M N T V W X Y Z","#00e676","#0b2e16"],["2","Mixed — B D G J P Q R U","#ffb300","#2e2000"],["3","Curves — C O S","#ef5350","#2e0b0b"]].map(([sh,desc,c,bg])=>(
-              <div key={sh} style={{background:bg,border:`1px solid ${c}22`,borderRadius:8,padding:"5px 12px",display:"flex",gap:10,alignItems:"center"}}>
-                <div style={{color:c,fontSize:15,fontWeight:900,fontFamily:"monospace",minWidth:12}}>{sh}</div>
-                <div style={{color:`${c}88`,fontSize:9,fontFamily:"monospace",letterSpacing:0.5,lineHeight:1.4}}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </>
-      ):(
-        <div style={{marginBottom:22,display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
-          <div style={{color:"#222",fontSize:11,fontFamily:"monospace",letterSpacing:3,marginBottom:4}}>BLUETOOTH REMOTE</div>
-          {[["⏮","Previous","= 1 Straight"],["⏯","Play/Pause","= 2 Mixed"],["⏭","Next","= 3 Curves"],["⏮+⏭","Prev then Next","= Confirm  (or ⏭+⏮)"]].map(([ico,btn,act])=>(
-            <div key={btn} style={{display:"flex",gap:14,alignItems:"center",background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"10px 18px",width:240}}>
-              <div style={{fontSize:22}}>{ico}</div>
-              <div><div style={{color:"#333",fontSize:12,fontFamily:"system-ui",fontWeight:600}}>{btn}</div><div style={{color:"#222",fontSize:10,fontFamily:"monospace",letterSpacing:1}}>{act}</div></div>
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      style={{position:"fixed",inset:0,background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+
+      {/* Fake homescreen background image */}
+      {bgImage&&<img src={bgImage} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:1,pointerEvents:"none"}}/>}
+
+      {/* Code digits — fade in only when code is being entered */}
+      <motion.div animate={{opacity:hasCode?1:0}} transition={{duration:0.2}}
+        style={{position:"absolute",top:"max(env(safe-area-inset-top),32px)",display:"flex",gap:10,zIndex:10}}>
+        {hasCode&&[...code].map((d,i)=>{
+          const c=d==="1"?"#00e676":d==="2"?"#ffb300":"#ef5350";
+          const b=d==="1"?"rgba(0,230,118,0.12)":d==="2"?"rgba(255,179,0,0.12)":"rgba(239,83,80,0.12)";
+          return(<motion.div key={i} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:600,damping:22}}
+            style={{width:46,height:46,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,fontFamily:"monospace",background:b,border:`1.5px solid ${c}40`,color:c,backdropFilter:"blur(8px)"}}>{d}</motion.div>);
+        })}
+      </motion.div>
+
+      {/* Swipe guide — shown subtly only in swipe mode when no code entered */}
+      {inputMode==="swipe"&&!hasCode&&!bgImage&&(
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:32,zIndex:2}}>
+          <SwArrow dir="up" label="1 · Straight" c="#ffffff18" onClick={()=>onInput("1")}/>
+          <div style={{display:"flex",gap:32,alignItems:"center"}}>
+            <SwArrow dir="left" label="✓ Confirm" c="#ffffff18" onClick={()=>onInput("confirm")}/>
+            <div style={{width:50,height:50,borderRadius:"50%",border:"1px solid #ffffff08",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <div style={{color:"#ffffff0c",fontSize:7,fontFamily:"monospace",letterSpacing:2,textAlign:"center"}}>SWIPE</div>
             </div>
-          ))}
-          <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,width:"85%",maxWidth:310}}>
-            {[["1","A E F H I K L M N T V W X Y Z","#00e676","#0b2e16"],["2","B D G J P Q R U","#ffb300","#2e2000"],["3","C O S","#ef5350","#2e0b0b"]].map(([sh,desc,c,bg])=>(
-              <div key={sh} style={{background:bg,border:`1px solid ${c}22`,borderRadius:8,padding:"4px 10px",display:"flex",gap:10,alignItems:"center"}}>
-                <div style={{color:c,fontSize:13,fontWeight:900,fontFamily:"monospace"}}>{sh}</div>
-                <div style={{color:`${c}77`,fontSize:9,fontFamily:"monospace",letterSpacing:0.5}}>{desc}</div>
-              </div>
-            ))}
+            <SwArrow dir="right" label="2 · Mixed" c="#ffffff18" onClick={()=>onInput("2")}/>
           </div>
+          <SwArrow dir="down" label="3 · Curves" c="#ffffff18" onClick={()=>onInput("3")}/>
         </div>
       )}
-      <button onClick={onSettings} style={{background:"#0a0a0a",border:"1px solid #181818",borderRadius:20,padding:"7px 20px",color:"#222",fontSize:11,fontFamily:"monospace",letterSpacing:2,cursor:"pointer",textTransform:"uppercase",WebkitTapHighlightColor:"transparent"}}>
-        {CAT_LABELS[cat]}  ·  {len==="any"?"any":len}
+
+      {/* BT mode — very minimal indicator */}
+      {inputMode==="bluetooth"&&!hasCode&&!bgImage&&(
+        <div style={{color:"#ffffff0d",fontSize:10,fontFamily:"monospace",letterSpacing:4,zIndex:2}}>BLUETOOTH</div>
+      )}
+
+      {/* Settings pill — bottom center, barely visible */}
+      <button onClick={onSettings}
+        style={{position:"absolute",bottom:"max(env(safe-area-inset-bottom),22px)",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:20,padding:"6px 18px",color:"rgba(255,255,255,0.12)",fontSize:10,fontFamily:"system-ui",letterSpacing:2,cursor:"pointer",WebkitTapHighlightColor:"transparent",backdropFilter:"blur(4px)",zIndex:10}}>
+        {CAT_LABELS[cat]}
       </button>
-      <div style={{position:"absolute",bottom:38,color:"#0e0e0e",fontSize:9,fontFamily:"monospace",letterSpacing:3}}>2-FINGER SWIPE DOWN = SETTINGS</div>
     </motion.div>
   );
 }
 
-function SwBtn({dir,label,sub,c,bg,onClick}){
-  return(<button onClick={onClick} style={{background:bg,border:`2px solid ${c}`,borderRadius:12,padding:"8px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,width:"100%",height:"100%",WebkitTapHighlightColor:"transparent",outline:"none"}}>
-    <span style={{color:c,fontSize:16,fontWeight:900,fontFamily:"monospace"}}>{dir}</span>
-    <span style={{color:c,fontSize:13,fontWeight:800,fontFamily:"monospace"}}>{label}</span>
-    <span style={{color:`${c}88`,fontSize:7,fontFamily:"monospace",letterSpacing:1}}>{sub}</span>
-  </button>);
+function SwArrow({dir,label,c,onClick}){
+  const arrows={up:"↑",down:"↓",left:"←",right:"→"};
+  return(
+    <button onClick={onClick} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",WebkitTapHighlightColor:"transparent",padding:8}}>
+      <span style={{color:c,fontSize:22,fontFamily:"monospace"}}>{arrows[dir]}</span>
+      <span style={{color:"rgba(255,255,255,0.08)",fontSize:8,fontFamily:"monospace",letterSpacing:1}}>{label}</span>
+    </button>
+  );
 }
 
 // ──────────────────────────────────────────────
@@ -697,78 +689,142 @@ function SettingsScreen({st,dispatch}){
   const[apiUrl,setApiUrl]=useState(st.apiUrl);
   const[apiKey,setApiKey]=useState(st.apiKey);
   const[apiKeyName,setApiKeyName]=useState(st.apiKeyName||"word");
-  return(<motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{position:"fixed",inset:0,background:"#1C1C1E",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-    <div style={{padding:"max(env(safe-area-inset-top),16px) 0 80px",maxWidth:480,margin:"0 auto"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 16px 24px"}}>
-        <h1 style={{color:"#fff",fontSize:28,fontWeight:700,fontFamily:"system-ui",margin:0}}>Settings</h1>
-        <button onClick={()=>dispatch({type:"BACK"})} style={{color:"#fff",background:"#3A3A3C",border:"none",borderRadius:"50%",width:34,height:34,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",WebkitTapHighlightColor:"transparent"}}>×</button>
+  const[apiOpen,setApiOpen]=useState(false);
+  const fileRef=useRef(null);
+
+  const handleBgUpload=(e)=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>set("bgImage",ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  return(
+    <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}}
+      style={{position:"fixed",inset:0,background:"#1C1C1E",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+      <div style={{padding:"max(env(safe-area-inset-top),20px) 0 80px",maxWidth:480,margin:"0 auto"}}>
+
+        {/* Header */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 20px 28px"}}>
+          <h1 style={{color:"#fff",fontSize:28,fontWeight:700,fontFamily:"system-ui",margin:0}}>Settings</h1>
+          <button onClick={()=>dispatch({type:"BACK"})} style={{color:"rgba(255,255,255,0.6)",background:"#2C2C2E",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",WebkitTapHighlightColor:"transparent"}}>×</button>
+        </div>
+
+        {/* Input */}
+        <Sect title="Input">
+          <SRow label="Swipe Gestures" active={st.inputMode==="swipe"} onClick={()=>set("inputMode","swipe")}/>
+          <SRow label="Bluetooth Remote" active={st.inputMode==="bluetooth"} onClick={()=>set("inputMode","bluetooth")} last/>
+        </Sect>
+
+        {/* Reveal */}
+        <Sect title="Reveal Mode">
+          <SRow label="iOS Call Screen" active={st.revealMode==="call"} onClick={()=>set("revealMode","call")}/>
+          <SRow label="Word on Screen" active={st.revealMode==="peek"} onClick={()=>set("revealMode","peek")}/>
+          <SRow label="POST to API" active={st.revealMode==="api"} onClick={()=>set("revealMode","api")} last/>
+        </Sect>
+
+        {/* Call settings */}
+        {st.revealMode==="call"&&<Sect title="Call Settings">
+          <Row label="Ring delay">
+            <Tb label="−" onClick={()=>set("delay",Math.max(1,st.delay-1))}/>
+            <span style={{color:"#0A84FF",fontFamily:"system-ui",fontWeight:700,minWidth:38,textAlign:"center"}}>{st.delay}s</span>
+            <Tb label="+" onClick={()=>set("delay",Math.min(30,st.delay+1))}/>
+          </Row>
+          <Row label="Name size">
+            {["small","medium","large"].map(s=><Seg key={s} label={s} active={st.fontSize===s} onClick={()=>set("fontSize",s)}/>)}
+          </Row>
+          <Row label="Wallpaper" last>
+            <div style={{display:"flex",gap:8}}>
+              {[["dark","#0a0e1a"],["g1","#1a1040"],["g2","#200010"],["g3","#001a08"]].map(([v,c])=>(
+                <button key={v} onClick={()=>set("wall",v)} style={{width:36,height:36,borderRadius:8,border:st.wall===v?"2.5px solid #0A84FF":"2px solid #3A3A3C",cursor:"pointer",background:c,WebkitTapHighlightColor:"transparent"}}/>
+              ))}
+            </div>
+          </Row>
+        </Sect>}
+
+        {/* API — collapsed by default */}
+        {st.revealMode==="api"&&<Sect title="API">
+          <button onClick={()=>setApiOpen(o=>!o)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"4px 0 12px",background:"none",border:"none",cursor:"pointer",WebkitTapHighlightColor:"transparent"}}>
+            <span style={{color:"#8E8E93",fontSize:13,fontFamily:"system-ui"}}>{apiOpen?"Hide connection details":"Show connection details"}</span>
+            <span style={{color:"#555",fontSize:14}}>{apiOpen?"▲":"▼"}</span>
+          </button>
+          {apiOpen&&<>
+            <div style={{paddingBottom:14,borderBottom:"1px solid #3A3A3C"}}>
+              <Label>POST URL</Label>
+              <Inp value={apiUrl} onChange={e=>setApiUrl(e.target.value)} onBlur={()=>set("apiUrl",apiUrl)} placeholder="https://your-api.example.com/word"/>
+            </div>
+            <div style={{padding:"14px 0",borderBottom:"1px solid #3A3A3C"}}>
+              <Label>JSON Key Name</Label>
+              <Inp value={apiKeyName} onChange={e=>setApiKeyName(e.target.value)} onBlur={()=>set("apiKeyName",apiKeyName)} placeholder="word"/>
+              <div style={{color:"#444",fontSize:10,fontFamily:"monospace",marginTop:4}}>{`{ "${apiKeyName}": "WORD" }`}</div>
+            </div>
+            <div style={{paddingTop:14}}>
+              <Label>API Key</Label>
+              <Inp value={apiKey} type="password" onChange={e=>setApiKey(e.target.value)} onBlur={()=>set("apiKey",apiKey)} placeholder="optional"/>
+            </div>
+          </>}
+        </Sect>}
+
+        {/* Words */}
+        <Sect title="Words">
+          <div style={{paddingBottom:12,borderBottom:"1px solid #3A3A3C"}}>
+            <Label>Category</Label>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,paddingTop:4}}>
+              {Object.keys(CAT_LABELS).map(c=>(
+                <button key={c} onClick={()=>set("cat",c)} style={{padding:"7px 14px",borderRadius:20,border:"none",cursor:"pointer",fontSize:12,fontFamily:"system-ui",fontWeight:500,background:st.cat===c?"#0A84FF":"#3A3A3C",color:"#fff",WebkitTapHighlightColor:"transparent"}}>{CAT_LABELS[c]}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{paddingTop:12}}>
+            <Label>Length</Label>
+            <div style={{display:"flex",gap:8,paddingTop:4}}>
+              {[["any","Any"],["3-5","3–5"],["5-7","5–7"],["6-8","6–8"]].map(([v,l])=>(
+                <button key={v} onClick={()=>set("len",v)} style={{flex:1,padding:"9px 4px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontFamily:"system-ui",fontWeight:600,background:st.len===v?"#0A84FF":"#3A3A3C",color:"#fff",WebkitTapHighlightColor:"transparent"}}>{l}</button>
+              ))}
+            </div>
+          </div>
+        </Sect>
+
+        {/* Timing */}
+        <Sect title="Audio Timing">
+          <Row label="Pulse">
+            {[150,250,350].map(d=><Seg key={d} label={`${d}ms`} active={st.pulse===d} onClick={()=>set("pulse",d)}/>)}
+          </Row>
+          <Row label="Group pause" last>
+            {[600,800,1100].map(d=><Seg key={d} label={`${d}ms`} active={st.pause===d} onClick={()=>set("pause",d)}/>)}
+          </Row>
+        </Sect>
+
+        {/* Homescreen */}
+        <Sect title="Homescreen">
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleBgUpload} style={{display:"none"}}/>
+          {st.bgImage?(
+            <div style={{paddingBottom:12}}>
+              <img src={st.bgImage} alt="bg" style={{width:"100%",borderRadius:10,objectFit:"cover",maxHeight:160}}/>
+              <div style={{display:"flex",gap:10,marginTop:10}}>
+                <button onClick={()=>fileRef.current?.click()} style={{flex:1,padding:"10px",borderRadius:8,border:"none",cursor:"pointer",fontSize:13,fontFamily:"system-ui",background:"#3A3A3C",color:"#fff",WebkitTapHighlightColor:"transparent"}}>Change</button>
+                <button onClick={()=>set("bgImage","")} style={{flex:1,padding:"10px",borderRadius:8,border:"none",cursor:"pointer",fontSize:13,fontFamily:"system-ui",background:"#3A3A3C",color:"#ff453a",WebkitTapHighlightColor:"transparent"}}>Remove</button>
+              </div>
+            </div>
+          ):(
+            <button onClick={()=>fileRef.current?.click()} style={{width:"100%",padding:"14px",borderRadius:8,border:"1.5px dashed #3A3A3C",cursor:"pointer",fontSize:13,fontFamily:"system-ui",background:"none",color:"#8E8E93",marginTop:4,marginBottom:4,WebkitTapHighlightColor:"transparent"}}>
+              Upload fake homescreen screenshot
+            </button>
+          )}
+          <div style={{color:"#555",fontSize:11,fontFamily:"system-ui",paddingTop:4,paddingBottom:8}}>Image shows as background on idle screen. Code digits overlay on top.</div>
+        </Sect>
+
+        <div style={{color:"#3a3a3a",fontSize:11,fontFamily:"system-ui",textAlign:"center",marginTop:8}}>MindCall v6.0</div>
       </div>
-
-      <Sect title="INPUT MODE">
-        <SRow label="👆  Swipe Gestures" sub="Up/Right/Down/Left" active={st.inputMode==="swipe"} onClick={()=>set("inputMode","swipe")} last={false}/>
-        <SRow label="🎵  Bluetooth Remote" sub="⏮ ⏯ ⏭ buttons" active={st.inputMode==="bluetooth"} onClick={()=>set("inputMode","bluetooth")} last={true}/>
-      </Sect>
-
-      {st.inputMode==="bluetooth"&&<div style={{padding:"0 16px 20px"}}>
-        <div style={{background:"#2C2C2E",borderRadius:12,padding:"12px 14px"}}>
-          <div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",marginBottom:8}}>Phase 1 — Code Entry</div>
-          {[["⏮ Previous","= digit 1 (Straight)"],["⏯ Play/Pause","= digit 2 (Mixed)"],["⏭ Next","= digit 3 (Curves)"],["⏮→⏭  or  ⏭→⏮","= Confirm (tap both quickly)"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:11}}>{v}</span></div>)}
-          <div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",marginTop:10,marginBottom:8}}>Phase 2 — YES / NO</div>
-          {[["⏮ Previous","= YES"],["⏭ Next","= NO"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:12}}>{v}</span></div>)}
-        </div>
-      </div>}
-
-      <Sect title="REVEAL MODE">
-        {[["call","📱  iOS Call Screen"],["peek","👁  Word on Black Screen"],["api","🔗  POST to API"]].map(([v,l],i,a)=><SRow key={v} label={l} active={st.revealMode===v} onClick={()=>set("revealMode",v)} last={i===a.length-1}/>)}
-      </Sect>
-
-      {st.revealMode==="api"&&<Sect title="API SETTINGS">
-        <div style={{padding:"10px 0",borderBottom:"1px solid #3A3A3C"}}>
-          <Label>POST URL</Label>
-          <Inp value={apiUrl} onChange={e=>setApiUrl(e.target.value)} onBlur={()=>set("apiUrl",apiUrl)} placeholder="https://your-api.example.com/word"/>
-        </div>
-        <div style={{padding:"10px 0",borderBottom:"1px solid #3A3A3C"}}>
-          <Label>JSON Key Name</Label>
-          <Inp value={apiKeyName} onChange={e=>setApiKeyName(e.target.value)} onBlur={()=>set("apiKeyName",apiKeyName)} placeholder="word"/>
-          <div style={{color:"#555",fontSize:10,fontFamily:"monospace",marginTop:4}}>Sends: {`{"`}{apiKeyName}{`": "WORD"}`}</div>
-        </div>
-        <div style={{padding:"10px 0"}}>
-          <Label>API Key / Secret</Label>
-          <Inp value={apiKey} type="password" onChange={e=>setApiKey(e.target.value)} onBlur={()=>set("apiKey",apiKey)} placeholder="optional-secret"/>
-          <div style={{color:"#555",fontSize:10,fontFamily:"monospace",marginTop:4}}>Sent as X-API-Key header</div>
-        </div>
-      </Sect>}
-
-      {st.revealMode==="call"&&<Sect title="CALL SETTINGS">
-        <Row label="Delay"><Tb label="−" onClick={()=>set("delay",Math.max(1,st.delay-1))}/><span style={{color:"#0A84FF",fontFamily:"system-ui",fontWeight:700,minWidth:44,textAlign:"center"}}>{st.delay}s</span><Tb label="+" onClick={()=>set("delay",Math.min(30,st.delay+1))}/></Row>
-        <Row label="Name size"><>{["small","medium","large"].map(s=><Seg key={s} label={s} active={st.fontSize===s} onClick={()=>set("fontSize",s)}/>)}</></Row>
-        <Row label="Wallpaper" last>
-          <div style={{display:"flex",gap:8}}>{[["dark","radial-gradient(#1a1a2e,#0f3460)"],["g1","radial-gradient(#302b63,#0f0c29)"],["g2","radial-gradient(#3d0030,#1a0010)"],["g3","radial-gradient(#003320,#001a0a)"]].map(([v,bg])=><button key={v} onClick={()=>set("wall",v)} style={{width:38,height:38,borderRadius:9,border:st.wall===v?"3px solid #0A84FF":"2px solid #444",cursor:"pointer",background:bg,WebkitTapHighlightColor:"transparent"}}/>)}</div>
-        </Row>
-      </Sect>}
-
-      <Sect title="WORD CATEGORY">
-        {Object.keys(CAT_LABELS).map((c,i,a)=><SRow key={c} label={CAT_LABELS[c]} sub={`${POOLS[c].length}`} active={st.cat===c} onClick={()=>set("cat",c)} last={i===a.length-1}/>)}
-      </Sect>
-
-      <Sect title="WORD LENGTH">
-        <div style={{display:"flex",gap:8,padding:"12px 0"}}>{[["any","Any"],["3-5","3–5"],["5-7","5–7"],["6-8","6–8"]].map(([v,l])=><button key={v} onClick={()=>set("len",v)} style={{flex:1,padding:"10px 4px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontFamily:"system-ui",fontWeight:600,background:st.len===v?"#0A84FF":"#3A3A3C",color:"#fff"}}>{l}</button>)}</div>
-      </Sect>
-
-      <Sect title="VIBRATION TIMING">
-        <Row label="Pulse duration"><>{[150,250,350].map(d=><Seg key={d} label={`${d}ms`} active={st.pulse===d} onClick={()=>set("pulse",d)}/>)}</></Row>
-        <Row label="Group pause" last><>{[600,800,1100].map(d=><Seg key={d} label={`${d}ms`} active={st.pause===d} onClick={()=>set("pause",d)}/>)}</></Row>
-      </Sect>
-
-      <div style={{color:"#1e1e1e",fontSize:11,fontFamily:"system-ui",textAlign:"center",marginTop:20}}>MindCall v6.0</div>
-    </div>
-  </motion.div>);
+    </motion.div>
+  );
 }
 // Settings helpers
-function Sect({title,children}){return(<div style={{padding:"0 16px",marginBottom:28}}><div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",letterSpacing:0.8,marginBottom:8,textTransform:"uppercase",paddingLeft:4}}>{title}</div><div style={{background:"#2C2C2E",borderRadius:12,padding:"0 16px"}}>{children}</div></div>);}
-function SRow({label,sub,active,onClick,last}){return(<button onClick={onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"14px 0",background:"none",border:"none",borderBottom:last?"none":"1px solid #3A3A3C",cursor:"pointer",textAlign:"left",WebkitTapHighlightColor:"transparent"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>{label}</span><div style={{display:"flex",gap:10,alignItems:"center"}}>{sub&&<span style={{color:"#555",fontSize:12,fontFamily:"system-ui"}}>{sub}</span>}{active&&<span style={{color:"#34C759",fontSize:20}}>✓</span>}</div></button>);}
-function Row({label,children,last}){return(<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:last?"none":"1px solid #3A3A3C"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>{label}</span><div style={{display:"flex",gap:8,alignItems:"center"}}>{children}</div></div>);}
+function Sect({title,children}){return(<div style={{padding:"0 16px",marginBottom:24}}><div style={{color:"#636366",fontSize:11,fontFamily:"system-ui",letterSpacing:0.6,marginBottom:8,textTransform:"uppercase",paddingLeft:4}}>{title}</div><div style={{background:"#2C2C2E",borderRadius:14,padding:"0 16px"}}>{children}</div></div>);}
+function SRow({label,sub,active,onClick,last}){return(<button onClick={onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"14px 0",background:"none",border:"none",borderBottom:last?"none":"1px solid #3A3A3C",cursor:"pointer",textAlign:"left",WebkitTapHighlightColor:"transparent"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>{label}</span><div style={{display:"flex",gap:10,alignItems:"center"}}>{sub&&<span style={{color:"#636366",fontSize:12}}>{sub}</span>}{active&&<span style={{color:"#34C759",fontSize:20}}>✓</span>}</div></button>);}
+function Row({label,children,last}){return(<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:last?"none":"1px solid #3A3A3C"}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:15}}>{label}</span><div style={{display:"flex",gap:8,alignItems:"center"}}>{children}</div></div>);}
 function Tb({label,onClick}){return(<button onClick={onClick} style={{color:"#fff",background:"#3A3A3C",border:"none",borderRadius:8,width:34,height:34,cursor:"pointer",fontSize:18,fontFamily:"system-ui",display:"flex",alignItems:"center",justifyContent:"center",WebkitTapHighlightColor:"transparent"}}>{label}</button>);}
-function Seg({label,active,onClick}){return(<button onClick={onClick} style={{padding:"6px 10px",borderRadius:7,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",fontWeight:600,background:active?"#0A84FF":"#3A3A3C",color:"#fff",WebkitTapHighlightColor:"transparent"}}>{label}</button>);}
-function Label({children}){return(<div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",marginBottom:6}}>{children}</div>);}
+function Seg({label,active,onClick}){return(<button onClick={onClick} style={{padding:"6px 11px",borderRadius:7,border:"none",cursor:"pointer",fontSize:11,fontFamily:"system-ui",fontWeight:600,background:active?"#0A84FF":"#3A3A3C",color:"#fff",WebkitTapHighlightColor:"transparent"}}>{label}</button>);}
+function Label({children}){return(<div style={{color:"#8E8E93",fontSize:12,fontFamily:"system-ui",marginBottom:6}}>{children}</div>);}
 function Inp({value,onChange,onBlur,placeholder,type="text"}){return(<input value={value} type={type} onChange={onChange} onBlur={onBlur} placeholder={placeholder} style={{width:"100%",background:"#3A3A3C",border:"none",borderRadius:8,padding:"10px 12px",color:"#fff",fontFamily:"monospace",fontSize:13,outline:"none",boxSizing:"border-box"}}/>);}
