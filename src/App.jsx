@@ -220,10 +220,9 @@ export default function App(){
   const cdRef=useRef(null);
   const ringStopRef=useRef(null);
   const codeTimer=useRef(null);
-  // Long-press detection: fire digit on press, cancel & confirm if held >= HOLD_MS
-  const HOLD_MS = 600;
-  const prevHoldTimer=useRef(null);
-  const nextHoldTimer=useRef(null);
+  // Chord combo detection: ⏮→⏭ or ⏭→⏮ within CHORD_MS = confirm
+  const prevChordTimer=useRef(null);
+  const nextChordTimer=useRef(null);
 
   const doFlash=useCallback(dir=>{setFlash(dir);setTimeout(()=>setFlash(null),400);if(navigator.vibrate)navigator.vibrate(30);},[]);
 
@@ -269,43 +268,46 @@ export default function App(){
     // Set up MediaSession so Bluetooth media buttons fire handlers
     if(!navigator.mediaSession)return;
     navigator.mediaSession.metadata=new MediaMetadata({title:"MindCall",artist:"Performer"});
-    // ── Long-press detection (correct approach) ──
-    // Key insight: do NOT fire digit immediately.
-    // Instead: on first event → start a short timer (TAP_MS).
-    //   • Timer expires with no repeat  → short tap  → send digit
-    //   • Key fires AGAIN before timer  → held/long press → send CONFIRM (cancel timer, no digit)
-    // This means a clean tap feels instant (~200ms delay) and a hold never produces a digit.
-    const TAP_MS=220;
+    // ── Chord-combo confirm ──
+    // ⏮ alone   → digit 1  (fires after CHORD_MS silence)
+    // ⏭ alone   → digit 3  (fires after CHORD_MS silence)
+    // ⏯         → digit 2  (immediate, unambiguous)
+    // ⏮ then ⏭ within CHORD_MS → CONFIRM  (cancel ⏮ timer, no digit)
+    // ⏭ then ⏮ within CHORD_MS → CONFIRM  (cancel ⏭ timer, no digit)
+    // No long press anywhere — purely short taps.
+    const CHORD_MS=320;
 
     const handlePrev=()=>{
       const s=stRef.current;
       if(s.screen==="idle"){
-        if(prevHoldTimer.current){
-          // Second fire before timer = long press = CONFIRM
-          clearTimeout(prevHoldTimer.current); prevHoldTimer.current=null;
-          handleInput("confirm");
-        } else {
-          // First fire — wait to see if it repeats
-          prevHoldTimer.current=setTimeout(()=>{
-            prevHoldTimer.current=null;
-            handleInput("1"); // tap confirmed after silence
-          }, TAP_MS);
+        // If ⏭ chord-timer is running → this is the ⏭→⏮ combo = CONFIRM
+        if(nextChordTimer.current){
+          clearTimeout(nextChordTimer.current); nextChordTimer.current=null;
+          handleInput("confirm"); return;
         }
+        // Otherwise arm ⏮ chord-timer; fire digit 1 if ⏭ doesn't follow in time
+        if(prevChordTimer.current){ clearTimeout(prevChordTimer.current); }
+        prevChordTimer.current=setTimeout(()=>{
+          prevChordTimer.current=null;
+          handleInput("1");
+        }, CHORD_MS);
       } else if(s.screen==="question") handleInput("yes");
     };
 
     const handleNext=()=>{
       const s=stRef.current;
       if(s.screen==="idle"){
-        if(nextHoldTimer.current){
-          clearTimeout(nextHoldTimer.current); nextHoldTimer.current=null;
-          handleInput("confirm");
-        } else {
-          nextHoldTimer.current=setTimeout(()=>{
-            nextHoldTimer.current=null;
-            handleInput("3");
-          }, TAP_MS);
+        // If ⏮ chord-timer is running → this is the ⏮→⏭ combo = CONFIRM
+        if(prevChordTimer.current){
+          clearTimeout(prevChordTimer.current); prevChordTimer.current=null;
+          handleInput("confirm"); return;
         }
+        // Otherwise arm ⏭ chord-timer; fire digit 3 if ⏮ doesn't follow in time
+        if(nextChordTimer.current){ clearTimeout(nextChordTimer.current); }
+        nextChordTimer.current=setTimeout(()=>{
+          nextChordTimer.current=null;
+          handleInput("3");
+        }, CHORD_MS);
       } else if(s.screen==="question") handleInput("no");
     };
 
@@ -480,7 +482,7 @@ function IdleScreen({st,onInput,onSettings}){
       ):(
         <div style={{marginBottom:22,display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
           <div style={{color:"#222",fontSize:11,fontFamily:"monospace",letterSpacing:3,marginBottom:4}}>BLUETOOTH REMOTE</div>
-          {[["⏮","Previous","Tap=1 Straight · Hold=Confirm"],["⏯","Play/Pause","= 2 Mixed"],["⏭","Next","Tap=3 Curves · Hold=Confirm"]].map(([ico,btn,act])=>(
+          {[["⏮","Previous","= 1 Straight"],["⏯","Play/Pause","= 2 Mixed"],["⏭","Next","= 3 Curves"],["⏮+⏭","Prev then Next","= Confirm  (or ⏭+⏮)"]].map(([ico,btn,act])=>(
             <div key={btn} style={{display:"flex",gap:14,alignItems:"center",background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"10px 18px",width:240}}>
               <div style={{fontSize:22}}>{ico}</div>
               <div><div style={{color:"#333",fontSize:12,fontFamily:"system-ui",fontWeight:600}}>{btn}</div><div style={{color:"#222",fontSize:10,fontFamily:"monospace",letterSpacing:1}}>{act}</div></div>
@@ -695,7 +697,7 @@ function SettingsScreen({st,dispatch}){
       {st.inputMode==="bluetooth"&&<div style={{padding:"0 16px 20px"}}>
         <div style={{background:"#2C2C2E",borderRadius:12,padding:"12px 14px"}}>
           <div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",marginBottom:8}}>Phase 1 — Code Entry</div>
-          {[["⏮ Tap Previous","= digit 1 (Straight)"],["⏮ Hold Previous","= Confirm"],["⏯ Play/Pause","= digit 2 (Mixed)"],["⏭ Tap Next","= digit 3 (Curves)"],["⏭ Hold Next","= Confirm"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:12}}>{v}</span></div>)}
+          {[["⏮ Previous","= digit 1 (Straight)"],["⏯ Play/Pause","= digit 2 (Mixed)"],["⏭ Next","= digit 3 (Curves)"],["⏮→⏭  or  ⏭→⏮","= Confirm (tap both quickly)"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:11}}>{v}</span></div>)}
           <div style={{color:"#8E8E93",fontSize:11,fontFamily:"system-ui",marginTop:10,marginBottom:8}}>Phase 2 — YES / NO</div>
           {[["⏮ Previous","= YES"],["⏭ Next","= NO"]].map(([k,v])=><div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#fff",fontFamily:"system-ui",fontSize:13}}>{k}</span><span style={{color:"#555",fontFamily:"monospace",fontSize:12}}>{v}</span></div>)}
         </div>
