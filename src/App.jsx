@@ -55,30 +55,41 @@ function polyBeeps(ctx,letter,pDur,gPause){
   if(rc.row!==6){t+=gp;for(let i=0;i<rc.col;i++){beep(990,t,pd);t+=pd+ip;}}
 }
 
-// iOS ringtone — authentic ascending arpeggio
+// iOS Classic Marimba ringtone — accurate recreation
 function playRingtone(ctx){
   if(!ctx||ctx.state==="closed")return()=>{};
   const nodes=[];
-  const tone=(freq,start,dur,vol=0.2)=>{
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type="sine";o.frequency.value=freq;
+  // Marimba uses triangle + slight harmonics for that woody mallet tone
+  const note=(freq,start,dur,vol=0.28)=>{
+    const o=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain();
+    o.type="triangle"; o.frequency.value=freq;
+    o2.type="sine"; o2.frequency.value=freq*2; // octave harmonic
+    const g2=ctx.createGain(); g2.gain.value=0.12;
+    // Sharp attack, fast decay like a struck bar
     g.gain.setValueAtTime(0,start);
-    g.gain.linearRampToValueAtTime(vol,start+0.025);
-    g.gain.linearRampToValueAtTime(vol,start+dur-0.04);
-    g.gain.linearRampToValueAtTime(0,start+dur);
-    o.connect(g);g.connect(ctx.destination);
-    o.start(start);o.stop(start+dur+0.1);
-    nodes.push(o);
+    g.gain.linearRampToValueAtTime(vol,start+0.008);
+    g.gain.exponentialRampToValueAtTime(vol*0.4,start+0.06);
+    g.gain.exponentialRampToValueAtTime(0.001,start+dur);
+    o.connect(g);o2.connect(g2);g2.connect(g);g.connect(ctx.destination);
+    o.start(start);o.stop(start+dur+0.05);
+    o2.start(start);o2.stop(start+dur+0.05);
+    nodes.push(o,o2);
   };
-  // Classic iPhone ring: Marimba-like G# A# D# ascending
-  const ring=(t)=>{
-    // first chord up
-    tone(830,t,0.14);tone(932,t+0.12,0.14);tone(1245,t+0.24,0.2);
-    // second chord
-    tone(830,t+0.55,0.14);tone(932,t+0.67,0.14);tone(1245,t+0.79,0.2);
+  // Classic Marimba pattern: G5 C6 E6 G6 — two quick pairs, pause, repeat
+  // Frequencies: G5=784, C6=1047, E6=1319, G6=1568
+  const phrase=(t)=>{
+    note(784, t,       0.18);
+    note(1047,t+0.17,  0.18);
+    note(1319,t+0.34,  0.18);
+    note(1568,t+0.51,  0.22);
+    // Second mini-phrase
+    note(784, t+0.82,  0.15);
+    note(1047,t+0.97,  0.15);
+    note(1319,t+1.12,  0.15);
+    note(1568,t+1.27,  0.20);
   };
-  let t=ctx.currentTime+0.1;
-  ring(t);ring(t+1.5);ring(t+3.0);
+  let t=ctx.currentTime+0.05;
+  phrase(t); phrase(t+2.2); phrase(t+4.4); phrase(t+6.6);
   return()=>nodes.forEach(n=>{try{n.stop();}catch{}});
 }
 
@@ -421,7 +432,7 @@ export default function App(){
         {st.screen==="question"&&<QuestionScreen key="q" st={st} onInput={handleInput}/>}
         {st.screen==="countdown"&&<CountdownScreen key="cd" word={st.word} secs={cdSecs}/>}
         {st.screen==="pick"&&<PickScreen key="p" words={st.pool} onPick={w=>dispatch({type:"PICK",w})}/>}
-        {st.screen==="reveal"&&st.revealMode==="call"&&<CallScreen key="cs" st={st} time={callTime} onDecline={()=>dispatch({type:"RESET"})} onAccept={()=>setTimeout(()=>dispatch({type:"RESET"}),800)}/>}
+        {st.screen==="reveal"&&st.revealMode==="call"&&<CallScreen key="cs" st={st} onDecline={()=>dispatch({type:"RESET"})} onAccept={()=>setTimeout(()=>dispatch({type:"RESET"}),800)}/>}
         {st.screen==="reveal"&&st.revealMode==="peek"&&<PeekScreen key="pk" st={st} onDismiss={()=>dispatch({type:"RESET"})}/>}
         {st.screen==="reveal"&&st.revealMode==="api"&&<ApiScreen key="ap" word={st.word} status={apiStatus} onDismiss={()=>{setApiStatus("idle");dispatch({type:"RESET"});}}/>}
         {st.screen==="settings"&&<SettingsScreen key="s" st={st} dispatch={dispatch}/>}
@@ -590,54 +601,55 @@ function PickScreen({words,onPick}){
 // ──────────────────────────────────────────────
 function CallScreen({st,time,onDecline,onAccept}){
   const{word,wall,fontSize}=st;
-  const fz={small:26,medium:36,large:50}[fontSize]||36;
-  // Liquid glass wallpapers
+  const fz={small:28,medium:38,large:54}[fontSize]||38;
   const bgs={
-    dark:"radial-gradient(ellipse at 30% 20%,#1a1a2e,#16213e 40%,#0f3460 70%,#1a1a2e)",
-    g1:"radial-gradient(ellipse at 40% 30%,#0f0c29,#302b63 50%,#24243e 80%)",
-    g2:"radial-gradient(ellipse at 50% 40%,#1a0010,#3d0030 50%,#1a0010)",
-    g3:"radial-gradient(ellipse at 40% 30%,#001a0a,#003320 50%,#001a0a)",
+    dark:"radial-gradient(ellipse at 35% 18%,#1e2a4a,#0f1f3d 45%,#080e1f 100%)",
+    g1:"radial-gradient(ellipse at 40% 20%,#1a1240,#0d0828 50%,#050310 100%)",
+    g2:"radial-gradient(ellipse at 45% 20%,#2e0828,#1a0418 50%,#080208 100%)",
+    g3:"radial-gradient(ellipse at 40% 20%,#042818,#021408 50%,#010804 100%)",
   };
   const bg=bgs[wall]||bgs.dark;
   return(
-    <motion.div initial={{y:"100%",scale:0.95}} animate={{y:0,scale:1}} exit={{y:"100%"}} transition={{type:"spring",stiffness:260,damping:26}}
-      style={{position:"fixed",inset:0,background:bg,display:"flex",flexDirection:"column",alignItems:"center",fontFamily:"system-ui",overflow:"hidden"}}>
-      {/* Ambient blurred orbs for depth */}
-      <div style={{position:"absolute",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(100,120,255,.18),transparent 70%)",top:-60,left:-40,pointerEvents:"none",filter:"blur(40px)"}}/>
-      <div style={{position:"absolute",width:250,height:250,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,100,150,.12),transparent 70%)",bottom:100,right:-60,pointerEvents:"none",filter:"blur(50px)"}}/>
-      {/* Status bar */}
-      <div style={{width:"100%",display:"flex",justifyContent:"space-between",padding:"max(env(safe-area-inset-top),16px) 24px 0",alignItems:"center",boxSizing:"border-box",zIndex:10}}>
-        <span style={{color:"#fff",fontSize:17,fontWeight:600,textShadow:"0 1px 4px rgba(0,0,0,.4)"}}>{time}</span>
-        <div style={{display:"flex",gap:6,alignItems:"center"}}>
-          <svg width="17" height="12" viewBox="0 0 17 12" fill="white" opacity="0.9"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="0.5"/><rect x="9" y="2.5" width="3" height="9.5" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5"/></svg>
-          <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.5" y="0.5" width="21" height="12" rx="3.5" stroke="white" strokeOpacity="0.5"/><rect x="2" y="2" width="15" height="9" rx="2" fill="white" fillOpacity="0.95"/><path d="M23 5v3a1.5 1.5 0 0 0 0-3z" fill="white" fillOpacity="0.5"/></svg>
-        </div>
+    <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:280,damping:28}}
+      style={{position:"fixed",inset:0,background:bg,display:"flex",flexDirection:"column",alignItems:"center",fontFamily:"system-ui",overflow:"hidden",WebkitUserSelect:"none"}}>
+
+      {/* Deep ambient orbs */}
+      <div style={{position:"absolute",inset:0,pointerEvents:"none",overflow:"hidden"}}>
+        <div style={{position:"absolute",width:420,height:420,borderRadius:"50%",background:"radial-gradient(circle,rgba(80,110,255,.22),transparent 65%)",top:-80,left:-60,filter:"blur(55px)"}}/>
+        <div style={{position:"absolute",width:350,height:350,borderRadius:"50%",background:"radial-gradient(circle,rgba(120,60,220,.15),transparent 65%)",top:"30%",right:-80,filter:"blur(60px)"}}/>
+        <div style={{position:"absolute",width:380,height:380,borderRadius:"50%",background:"radial-gradient(circle,rgba(60,80,200,.18),transparent 65%)",bottom:-60,left:"10%",filter:"blur(50px)"}}/>
       </div>
-      {/* Liquid glass pill — "incoming call" */}
-      <motion.div animate={{opacity:[0.5,1,0.5]}} transition={{duration:2,repeat:Infinity,ease:"easeInOut"}}
-        style={{marginTop:18,padding:"6px 20px",borderRadius:50,background:"rgba(255,255,255,0.1)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.8)",fontSize:14,letterSpacing:0.3}}>
-        incoming call
-      </motion.div>
-      {/* Avatar — liquid glass circle */}
-      <div style={{marginTop:28,position:"relative"}}>
-        <div style={{width:112,height:112,borderRadius:"50%",background:"rgba(255,255,255,0.08)",backdropFilter:"blur(30px) saturate(200%)",WebkitBackdropFilter:"blur(30px) saturate(200%)",border:"1.5px solid rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.3)"}}>
-          <svg width="60" height="60" viewBox="0 0 56 56" fill="rgba(255,255,255,0.7)"><circle cx="28" cy="20" r="12.5"/><path d="M2 52c0-14.4 11.6-24 26-24s26 9.6 26 24"/></svg>
+
+      {/* Content — centred vertically in upper 60% */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",paddingTop:"max(env(safe-area-inset-top),24px)",paddingBottom:160,width:"100%",position:"relative",zIndex:2}}>
+
+        {/* Incoming call pill */}
+        <motion.div animate={{opacity:[0.55,1,0.55]}} transition={{duration:2,repeat:Infinity,ease:"easeInOut"}}
+          style={{marginBottom:32,padding:"7px 22px",borderRadius:50,background:"rgba(255,255,255,0.09)",backdropFilter:"blur(24px) saturate(180%)",WebkitBackdropFilter:"blur(24px) saturate(180%)",border:"1px solid rgba(255,255,255,0.16)",color:"rgba(255,255,255,0.75)",fontSize:14,letterSpacing:0.4}}>
+          incoming call
+        </motion.div>
+
+        {/* Avatar */}
+        <div style={{width:118,height:118,borderRadius:"50%",background:"rgba(255,255,255,0.07)",backdropFilter:"blur(32px) saturate(200%)",WebkitBackdropFilter:"blur(32px) saturate(200%)",border:"1.5px solid rgba(255,255,255,0.22)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 10px 50px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.25)"}}>
+          <svg width="62" height="62" viewBox="0 0 56 56" fill="rgba(255,255,255,0.65)"><circle cx="28" cy="20" r="12.5"/><path d="M2 52c0-14.4 11.6-24 26-24s26 9.6 26 24"/></svg>
         </div>
+
+        {/* Caller name */}
+        <div style={{color:"#fff",fontSize:fz,fontWeight:700,marginTop:22,textAlign:"center",padding:"0 28px",letterSpacing:0.3,textShadow:"0 2px 24px rgba(0,0,0,0.7)",lineHeight:1.15}}>{word}</div>
+        <div style={{color:"rgba(255,255,255,0.45)",fontSize:15,marginTop:8,letterSpacing:0.3}}>mobile</div>
       </div>
-      {/* Caller name */}
-      <div style={{color:"#fff",fontSize:fz,fontWeight:700,marginTop:18,textAlign:"center",padding:"0 20px",letterSpacing:0.5,textShadow:"0 2px 20px rgba(0,0,0,.6)"}}>{word}</div>
-      <div style={{color:"rgba(255,255,255,0.55)",fontSize:15,marginTop:6,letterSpacing:0.2}}>mobile</div>
-      {/* Action buttons — liquid glass style */}
-      <div style={{position:"absolute",bottom:"max(env(safe-area-inset-bottom,0px),50px)",width:"100%",display:"flex",justifyContent:"space-around",padding:"0 52px",boxSizing:"border-box"}}>
+
+      {/* Buttons — anchored above home indicator */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,paddingBottom:"max(env(safe-area-inset-bottom),28px)",paddingTop:24,background:"linear-gradient(to top,rgba(0,0,0,0.45) 0%,transparent 100%)",display:"flex",justifyContent:"space-around",alignItems:"flex-end",paddingLeft:52,paddingRight:52,boxSizing:"border-box",zIndex:3}}>
         {[
-          {fn:onDecline,label:"Decline",bg:"rgba(255,59,48,0.85)",border:"rgba(255,59,48,0.6)",shadow:"rgba(255,59,48,0.5)",icon:<EndCallIcon/>},
-          {fn:onAccept,label:"Accept",bg:"rgba(52,199,89,0.85)",border:"rgba(52,199,89,0.6)",shadow:"rgba(52,199,89,0.5)",icon:<AcceptCallIcon/>}
+          {fn:onDecline,label:"Decline",bg:"rgba(255,59,48,0.88)",border:"rgba(255,80,65,0.7)",shadow:"rgba(255,59,48,0.55)",icon:<EndCallIcon/>},
+          {fn:onAccept,label:"Accept",bg:"rgba(52,199,89,0.88)",border:"rgba(70,210,100,0.7)",shadow:"rgba(52,199,89,0.55)",icon:<AcceptCallIcon/>}
         ].map(({fn,label,bg,border,shadow,icon})=>(
-          <div key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-            <button onClick={fn} style={{width:76,height:76,borderRadius:"50%",background:bg,border:`1.5px solid ${border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",boxShadow:`0 4px 30px ${shadow}, inset 0 1px 0 rgba(255,255,255,0.3)`,WebkitTapHighlightColor:"transparent"}}>
+          <div key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+            <button onClick={fn} style={{width:80,height:80,borderRadius:"50%",background:bg,border:`1.5px solid ${border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",boxShadow:`0 6px 36px ${shadow},inset 0 1px 0 rgba(255,255,255,0.28)`,WebkitTapHighlightColor:"transparent",outline:"none"}}>
               {icon}
             </button>
-            <span style={{color:"rgba(255,255,255,0.65)",fontSize:13,fontWeight:500}}>{label}</span>
+            <span style={{color:"rgba(255,255,255,0.7)",fontSize:14,fontWeight:500}}>{label}</span>
           </div>
         ))}
       </div>
