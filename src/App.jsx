@@ -275,7 +275,7 @@ export default function App(){
     // ⏮ then ⏭ within CHORD_MS → CONFIRM  (cancel ⏮ timer, no digit)
     // ⏭ then ⏮ within CHORD_MS → CONFIRM  (cancel ⏭ timer, no digit)
     // No long press anywhere — purely short taps.
-    const CHORD_MS=320;
+    const CHORD_MS=1000;
 
     const handlePrev=()=>{
       const s=stRef.current;
