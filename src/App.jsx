@@ -439,12 +439,12 @@ export default function App(){
   const FLASH_COLORS={up:"linear-gradient(to bottom,rgba(0,240,80,.55),transparent 40%)",down:"linear-gradient(to top,rgba(255,50,50,.55),transparent 40%)",left:"linear-gradient(to right,rgba(100,160,255,.55),transparent 50%)",right:"linear-gradient(to left,rgba(255,200,0,.55),transparent 50%)"};
 
   return(
-    <div style={{position:"fixed",inset:0,background:"#000",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"}}
+    <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#000",overflow:"hidden",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"}}
       onTouchStart={e=>{onTouchStart(e);onTwoS(e);}} onTouchMove={onTwoM} onTouchEnd={onTouchEnd}>
       <AnimatePresence>{flash&&<motion.div key={flash+Date.now()} initial={{opacity:0.9}} animate={{opacity:0}} transition={{duration:0.4}} style={{position:"fixed",inset:0,zIndex:9999,pointerEvents:"none",background:FLASH_COLORS[flash]||""}}/>}</AnimatePresence>
       {!activated&&<ActivateSplash onActivate={activate}/>}
       <AnimatePresence mode="wait">
-        {st.screen==="idle"&&<IdleScreen key="i" st={st} onInput={handleInput} onSettings={()=>dispatch({type:"SETTINGS"})}/>}
+        {st.screen==="idle"&&<IdleScreen key="i" st={st}/>}
         {st.screen==="vibrating"&&<VibratingScreen key="v" st={st}/>}
         {st.screen==="question"&&<QuestionScreen key="q" st={st} onInput={handleInput}/>}
         {st.screen==="countdown"&&<CountdownScreen key="cd" word={st.word} secs={cdSecs}/>}
@@ -474,63 +474,27 @@ function ActivateSplash({onActivate}){
 // ──────────────────────────────────────────────
 // IDLE
 // ──────────────────────────────────────────────
-function IdleScreen({st,onInput,onSettings}){
-  const{code,cat,len,inputMode,bgImage}=st;
+function IdleScreen({st}){
+  const{code,bgImage}=st;
   const hasCode=code.length>0;
   return(
     <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-      style={{position:"fixed",inset:0,background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+      style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#000",overflow:"hidden"}}>
 
-      {/* Fake homescreen background image */}
-      {bgImage&&<img src={bgImage} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:1,pointerEvents:"none"}}/>}
+      {/* Fake homescreen background */}
+      {bgImage&&<img src={bgImage} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none"}}/>}
 
-      {/* Code digits — fade in only when code is being entered */}
-      <motion.div animate={{opacity:hasCode?1:0}} transition={{duration:0.2}}
-        style={{position:"absolute",top:"max(env(safe-area-inset-top),32px)",display:"flex",gap:10,zIndex:10}}>
-        {hasCode&&[...code].map((d,i)=>{
-          const c=d==="1"?"#00e676":d==="2"?"#ffb300":"#ef5350";
-          const b=d==="1"?"rgba(0,230,118,0.12)":d==="2"?"rgba(255,179,0,0.12)":"rgba(239,83,80,0.12)";
-          return(<motion.div key={i} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:600,damping:22}}
-            style={{width:46,height:46,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,fontFamily:"monospace",background:b,border:`1.5px solid ${c}40`,color:c,backdropFilter:"blur(8px)"}}>{d}</motion.div>);
-        })}
-      </motion.div>
-
-      {/* Swipe guide — shown subtly only in swipe mode when no code entered */}
-      {inputMode==="swipe"&&!hasCode&&!bgImage&&(
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:32,zIndex:2}}>
-          <SwArrow dir="up" label="1 · Straight" c="#ffffff18" onClick={()=>onInput("1")}/>
-          <div style={{display:"flex",gap:32,alignItems:"center"}}>
-            <SwArrow dir="left" label="✓ Confirm" c="#ffffff18" onClick={()=>onInput("confirm")}/>
-            <div style={{width:50,height:50,borderRadius:"50%",border:"1px solid #ffffff08",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <div style={{color:"#ffffff0c",fontSize:7,fontFamily:"monospace",letterSpacing:2,textAlign:"center"}}>SWIPE</div>
-            </div>
-            <SwArrow dir="right" label="2 · Mixed" c="#ffffff18" onClick={()=>onInput("2")}/>
-          </div>
-          <SwArrow dir="down" label="3 · Curves" c="#ffffff18" onClick={()=>onInput("3")}/>
+      {/* Code digits — top center, only when actively entering */}
+      {hasCode&&(
+        <div style={{position:"absolute",top:"max(env(safe-area-inset-top),28px)",left:0,right:0,display:"flex",justifyContent:"center",gap:10,zIndex:10}}>
+          {[...code].map((d,i)=>{
+            const c=d==="1"?"#00e676":d==="2"?"#ffb300":"#ef5350";
+            return(<motion.div key={i} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:600,damping:22}}
+              style={{width:44,height:44,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:900,fontFamily:"monospace",background:"rgba(0,0,0,0.6)",border:`1.5px solid ${c}50`,color:c,backdropFilter:"blur(10px)"}}>{d}</motion.div>);
+          })}
         </div>
       )}
-
-      {/* BT mode — very minimal indicator */}
-      {inputMode==="bluetooth"&&!hasCode&&!bgImage&&(
-        <div style={{color:"#ffffff0d",fontSize:10,fontFamily:"monospace",letterSpacing:4,zIndex:2}}>BLUETOOTH</div>
-      )}
-
-      {/* Settings pill — bottom center, barely visible */}
-      <button onClick={onSettings}
-        style={{position:"absolute",bottom:"max(env(safe-area-inset-bottom),22px)",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:20,padding:"6px 18px",color:"rgba(255,255,255,0.12)",fontSize:10,fontFamily:"system-ui",letterSpacing:2,cursor:"pointer",WebkitTapHighlightColor:"transparent",backdropFilter:"blur(4px)",zIndex:10}}>
-        {CAT_LABELS[cat]}
-      </button>
     </motion.div>
-  );
-}
-
-function SwArrow({dir,label,c,onClick}){
-  const arrows={up:"↑",down:"↓",left:"←",right:"→"};
-  return(
-    <button onClick={onClick} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",WebkitTapHighlightColor:"transparent",padding:8}}>
-      <span style={{color:c,fontSize:22,fontFamily:"monospace"}}>{arrows[dir]}</span>
-      <span style={{color:"rgba(255,255,255,0.08)",fontSize:8,fontFamily:"monospace",letterSpacing:1}}>{label}</span>
-    </button>
   );
 }
 

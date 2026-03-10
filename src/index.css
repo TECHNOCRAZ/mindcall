@@ -1,2 +1,5 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body,#root{width:100%;height:100%;background:#000;overflow:hidden;overscroll-behavior:none;touch-action:pan-x pan-y;}
+html{background:#000;height:-webkit-fill-available;}
+body,#root{width:100%;background:#000;overflow:hidden;overscroll-behavior:none;touch-action:pan-x pan-y;}
+body{min-height:100vh;min-height:-webkit-fill-available;min-height:100dvh;}
+#root{height:100vh;height:-webkit-fill-available;height:100dvh;}
